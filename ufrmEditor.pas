@@ -13,11 +13,18 @@
 
 interface
 
+
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   SynEdit, Menus, StdActns, ActnList, SynRegExpr, StdCtrls, SynEditHighlighter,
   SynHighlighterMulti, ExtCtrls, SynEditTypes, SynEditRegexSearch,
   SynEditMiscClasses, SynEditSearch, SynCompletionProposal, ImgList;
+
+const
+ TSynSpecialChars = ['Ŕ'..'Ö', 'Ř'..'ö', 'ř'..'˙'];
+ TSynValidStringChars = ['_', '0'..'9', 'A'..'Z', 'a'..'z'] + TSynSpecialChars;
+
+
 
 type
   TFunctionCall=record

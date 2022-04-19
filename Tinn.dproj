@@ -49,6 +49,7 @@
 			<DCC_DebugInformation>false</DCC_DebugInformation>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_2)'!=''">
+			<DCC_UnitSearchPath>c:\ustawienia\_workdir\delphi\OraTinn\SynEdit\Source;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
 			<DCC_DcuOutput>C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\</DCC_DcuOutput>
 			<DCC_BplOutput>C:\Users\Public\Documents\RAD Studio\8.0\Bpl\</DCC_BplOutput>
 			<DCC_DcpOutput>C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\dcu\</DCC_DcpOutput>
