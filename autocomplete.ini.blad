@@ -1,0 +1,73 @@
+[forb | for-Anweisung]
+for | IN  ..  loop
+
+end loop;
+
+[function | Funktionsdeklaration]
+function |(): ;
+begin
+
+end;
+
+
+[if | if-Anweisung]
+if | then
+
+end if;
+
+[ife | if then (ohne begin/end) else (ohne begin/end)]
+if | then
+
+else
+
+end if;
+
+
+
+[exception | exception]
+ EXCEPTION
+   WHEN Orw_Pck_Bledy.blad THEN
+     Orw_Pck_Bledy.rejestruj_przejscie(|'pakiet.nazwa('||p_param||')');
+   WHEN OTHERS THEN
+      Orw_Pck_Bledy.zglosp('pakiet.nazwa('||p_param||')');
+
+[blok | Block]
+begin
+  select * into 
+  from |;
+exception
+  when NO_DATA_FOUND then
+  when TOO_MANY_ROWS then
+  when DUP_VAL_ON_INDEX then
+  when others then  
+end;
+
+
+[pr | dbms_output]
+dbms_output.put_line(|);
+
+
+[authid | authid]
+AUTHID CURRENT_USER |
+
+[-- | Opis funkcji]
+--------------------------------------------------------------------------------
+-- |
+--------------------------------------------------------------------------------
+
+
+[blad | Zglos blad]
+orw_pck_bledy.zglos('blad_wewnetrzny','l=|');
+
+[TMR | TMR]
+TOO_MANY_ROWS|
+
+[NDF | NDF]
+NO_DATA_FOUND|
+
+[DUP | DUP]
+DUP_VAL_ON_INDEX THEN|
+
+[DUP | DUP]
+DUP_VAL_ON_INDEX THEN|
+

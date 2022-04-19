@@ -1,0 +1,1 @@
+copy tinn.exe "c:\Program Files\OraTinn\Tinn.exe" 
