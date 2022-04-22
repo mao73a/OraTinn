@@ -261,7 +261,7 @@ var
 begin
   if (lbHighlighters.ItemIndex >= 0) then
   begin
-    Attr := TSynHighlighterAttributes.Create(lbElements.Items[lbElements.ItemIndex]);
+    Attr := TSynHighlighterAttributes.Create(lbElements.Items[lbElements.ItemIndex], lbElements.Items[lbElements.ItemIndex]);
     try
       AttrStyle := [];
       Attr.ForegRound := cgColors.ForegroundColor;

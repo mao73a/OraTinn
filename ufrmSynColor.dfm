@@ -162,6 +162,7 @@ object dlgSynColor: TdlgSynColor
         Gutter.Font.Name = 'Terminal'
         Gutter.Font.Style = []
         Gutter.Visible = False
+        Gutter.Width = 0
         Lines.Strings = (
           '{ Syntax highlighting }'
           'procedure TForm1.Button1Click(Sender: TObject);'
@@ -206,9 +207,9 @@ object dlgSynColor: TdlgSynColor
     Caption = 'Save'
     Default = True
     ModalResult = 1
+    NumGlyphs = 2
     TabOrder = 1
     OnClick = BitBtn1Click
-    NumGlyphs = 2
   end
   object BitBtn3: TBitBtn
     Left = 476
@@ -218,12 +219,11 @@ object dlgSynColor: TdlgSynColor
     Cancel = True
     Caption = 'Cancel'
     ModalResult = 2
+    NumGlyphs = 2
     TabOrder = 2
     OnClick = BitBtn3Click
-    NumGlyphs = 2
   end
   object ColorDialog: TColorDialog
-    Ctl3D = True
     Left = 504
     Top = 64
   end

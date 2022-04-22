@@ -1268,6 +1268,7 @@ begin
   gEndComment                         := iniFile.ReadString('App Settings', 'EndComment', '');
 
   // Editor Options
+
   FEditorOptions.Gutter.Color         := iniFile.ReadInteger('Editor Settings', 'GutterColor', FEditorOptions.Gutter.Color);
   FEditorOptions.Gutter.Font.Name     := iniFile.ReadString('Editor Settings', 'GutterFont', 'Courier New');
   FEditorOptions.Gutter.Font.Size     := iniFile.ReadInteger('Editor Settings', 'GutterFontSize', 8);
@@ -1290,7 +1291,6 @@ begin
   FEditorOptions.SelectedColor.Foreground := iniFile.ReadInteger('Editor Settings', 'SelectedColorForeground', FEditorOptions.SelectedColor.Foreground);
   FEditorOptions.TabWidth             := iniFile.ReadInteger('Editor Settings', 'TabWidth', 2);
   FEditorOptions.Options              := TSynEditorOptions(iniFile.ReadInteger('Editor Settings', 'Options', 25560082));
-
 
   // Search Settings
   SearchListMax                       := iniFile.ReadInteger('Search Settings', 'SearchListMax', 6);
@@ -3333,8 +3333,9 @@ var
   vForm : TFrmConnect;
   vConnected : Boolean;
 begin
+  vForm:=TFrmConnect.Create(Self);
+  vConnected:=False;
   try
-    vForm:=TFrmConnect.Create(Self);
     vForm.iniFile:=IniFile;
     repeat
       if vForm.ShowModal=mrOK then
@@ -3418,8 +3419,8 @@ var
  vForm : TFormExternalTools;
  vI, vReturn : Integer;
 begin
+ vForm:=TFormExternalTools.Create(Self);
  try
-   vForm:=TFormExternalTools.Create(Self);
    for vI:=0 to Length(externalTools.Items)-1 do
      vForm.Add(externalTools.Items[vI].Name, externalTools.Items[vI].Command);
 
@@ -3493,7 +3494,6 @@ end;
 procedure TfrmTinnMain.aJumpProcedureExecute(Sender: TObject);
 var
   vForm : TFrmJumpProc;
-  vConnected : Boolean;
 begin
   try
     if not Assigned(frmExplorer) then exit;

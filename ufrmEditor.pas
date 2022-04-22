@@ -508,6 +508,7 @@ end;
 
 procedure TfrmEditor.FormCreate(Sender: TObject);
 begin
+
  if (frmTinnMain.boolOpenMaxed = false) then
  	Self.WindowState := wsNormal
  else
@@ -527,6 +528,7 @@ begin
   synEditor.Gutter.ShowLineNumbers := frmTinnMain.miShowLineNum.Checked;
   if (frmTinnMain.actShowSpecialChar.Checked) then
   	synEditor.Options := synEditor.Options + [eoShowSpecialChars];
+
   ActiveEditor := 'synEditor';
   //actReload.Enabled := false;
   frmTinnMain.BuildMRU(miRecentFiles);
@@ -1109,6 +1111,7 @@ procedure TfrmEditor.synEditorKeyUp(Sender: TObject; var Key: Word;
 var
   tmpLineNumber : TPoint;
 begin
+
 	if (ctrlKey = 17) then
   begin
     if ((Key = 86) or (Key = 88) or (Key = 89) or (Key = 90)) then  // Key 90 = z for undo after saves
@@ -1600,6 +1603,7 @@ end;
 
 procedure TfrmEditor.ToggleSpecialChars(iChecked : boolean);
 begin
+
 	if (synEditor2 <> Nil) then
   begin
   	if iChecked then
@@ -2127,7 +2131,8 @@ begin
          //find the name of package
          dotPos:=TmpX;
          Dec(TmpX); Dec(TmpX);
-         while (TmpX > 0) and (locLine[TmpX] in TSynValidStringChars) do
+         while (TmpX > 0) and CharInSet(locLine[TmpX], TSynValidStringChars) do
+         //(locLine[TmpX] in TSynValidStringChars) do
            Dec(TmpX);
          if TmpX>=0 then
          begin
@@ -2348,11 +2353,16 @@ begin
   else tmpCharB := #0;
   {End Marco de Groot}
 
-  if not(tmpCharA in AllBrackets) and
-     not(tmpCharB in AllBrackets) then Exit;
+  if //not(tmpCharA in AllBrackets) and
+     not CharInSet(tmpCharA , AllBrackets) and
+     //not(tmpCharB in AllBrackets)
+     not CharInSet(tmpCharB, AllBrackets) then Exit;
 
   Symbol := tmpCharB;
-  if not(tmpCharB in AllBrackets) then
+  if
+  //not(tmpCharB in AllBrackets)
+  not CharInSet(tmpCharB, AllBrackets)
+  then
   begin
     editCurPos.Char := editCurPos.Char - 1;
     Symbol := tmpCharA;
@@ -2592,7 +2602,9 @@ var
     vvSize := Length(ALine);
     vvTmp:=0;
     //find first non white character
-    while (vvTmp < vvSize-1) and not (ALine[vvTmp] in TSynValidStringChars) do
+    while (vvTmp < vvSize-1)
+     //and not (ALine[vvTmp] in TSynValidStringChars) do
+       and not CharInSet(ALine[vvTmp], TSynValidStringChars) do
          Inc(vvTmp);
     if vvTmp = vvSize then
       result:=-1

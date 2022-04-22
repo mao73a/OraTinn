@@ -43,14 +43,6 @@ object frmEditor: TfrmEditor
     OnKeyUp = synEditorKeyUp
     OnMouseDown = synEditorMouseDown
     OnMouseMove = synEditorMouseMove
-    CodeFolding.GutterShapeSize = 11
-    CodeFolding.CollapsedLineColor = clGrayText
-    CodeFolding.FolderBarLinesColor = clGrayText
-    CodeFolding.IndentGuidesColor = clGray
-    CodeFolding.IndentGuides = True
-    CodeFolding.ShowCollapsedLine = False
-    CodeFolding.ShowHintMark = True
-    UseCodeFolding = False
     Gutter.Font.Charset = DEFAULT_CHARSET
     Gutter.Font.Color = clWindowText
     Gutter.Font.Height = -11
@@ -68,9 +60,6 @@ object frmEditor: TfrmEditor
     OnScroll = synEditorScroll
     OnStatusChange = synEditorStatusChange
     OnPaintTransient = synEditorPaintTransient
-    FontSmoothing = fsmNone
-    ExplicitWidth = 651
-    ExplicitHeight = 453
   end
   object MainMenu1: TMainMenu
     Images = frmTinnMain.ToolbarImages

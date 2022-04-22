@@ -7,7 +7,7 @@ uses
   StdCtrls, SynEditHighlighter, SynHighlighterSQL, SynEdit, ComCtrls,
   ExtCtrls, SynCompletionProposal, ImgList, ToolWin, Db, Menus,
   uFrmCompileErrors, inifiles, uAutoComplete, uPLSQLLExer, SynEditTypes, uQueryGrid,
-  ActnList, Oracle;
+  ActnList, Oracle, OracleData;
 
 const DefaultDelay : Integer=10;
       QUERY_BREAK_AFTER = 1000;
@@ -45,7 +45,6 @@ type
   TFrmCodeCompletion = class(TForm)
     SynCompletionProposalAll: TSynCompletionProposal;
     pmConnectMenu: TPopupMenu;
-    dsCompile: TOracleQuery;
     tsFile: TPageControl;
     TabSheet1: TTabSheet;
     tvFunctions: TTreeView;
@@ -65,13 +64,14 @@ type
     Memo1: TMemo;
     TabSheet3: TTabSheet;
     Memo2: TMemo;
-    dsDetail: TOracleQuery;
     alOgolne: TActionList;
     aWarnings: TAction;
     ComplierWarnings1: TMenuItem;
     ComplierWarnings2: TMenuItem;
     OracleQuery1: TOracleQuery;
     OracleSession1: TOracleSession;
+    dsCompile: TOracleDataSet;
+    dsDetail: TOracleDataSet;
     procedure FormDestroy(Sender: TObject);
     procedure tvFunctionsChange(Sender: TObject; Node: TTreeNode);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -2157,7 +2157,7 @@ begin
     end;
 
     try
-      dsCompile.RowsInBlock:=10000;
+//      dsCompile.RowsInBlock:=10000;
       if not Assigned(fFrmQueryGrid) then begin
         fFrmQueryGrid:=TFrmQueryGrid.Create(Self);
         fpCompileResults.height:=1;
@@ -2171,12 +2171,6 @@ begin
         if Assigned(fpCompileResults) and (fpCompileResults.height<=1) then
           fFrmQueryGrid.ManualDock(fpCompileResults);
       end;    
-      fFrmQueryGrid.sgGrid.Visible:=False;
-      fFrmQueryGrid.Clear;      
-      if fFrmQueryGrid.Mode<>'HTML' then begin
-        fFrmQueryGrid.Show;
-        Refresh;  Repaint;
-      end;
 
       dsCompile.Close;
       vStart:=Now;
@@ -2189,7 +2183,7 @@ begin
         dsCompile.Open;
       end;
 
-      if  dsCompile.RecordCount=dsCompile.RowsInBlock then  vAdd:='+';
+      //if  dsCompile.RecordCount=dsCompile.RowsInBlock then  vAdd:='+';
       if Assigned(fspStatus) then begin
         fspStatus.Text:=IntToStr(dsCompile.RecordCount)+vAdd+' rows'+' | '+DateTimeDiff(vStart,vStop);
         fFrmQueryGrid.Status:=fspStatus.Text;
@@ -2197,8 +2191,8 @@ begin
 
       Refresh;  Repaint;
       
-      for vIdx := 0 to dsCompile.SqlFields.Count - 1 do begin
-        s := TSqlField(dsCompile.SqlFields.Items[vIdx]).ColName;
+      for vIdx := 0 to dsCompile.FieldCount - 1 do begin
+        s := dsCompile.Fields[vIdx].FieldName;
         fFrmQueryGrid.AddHeaderCol(s);
       end;
 
@@ -2209,7 +2203,7 @@ begin
       begin
         Inc(vRowCount); Dec(vRowCountBreak);
         fFrmQueryGrid.NewRow;
-        for vIdx := 0 to dsCompile.SqlFields.Count - 1 do begin
+        for vIdx := 0 to dsCompile.FieldCount - 1 do begin
           fFrmQueryGrid.AddRowCol(dsCompile.Fields[vIdx].AsString);
         end;
         if vRowCountBreak<=0 then begin
@@ -2229,7 +2223,7 @@ begin
       dsCompile.SQL.Clear;
       dsCompile.Close;
       dsCompile.Active:=False;
-      dsCompile.RowsInBlock:=1000;
+//      dsCompile.RowsInBlock:=1000;
     end;
 
     if Assigned(dsCompile) then

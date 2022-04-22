@@ -57,9 +57,9 @@ begin
     if fColumnsCount=0 then fSL.Add('<TR>');
     fSL.Add('<TD>'+pText+'</TD>');
   end else begin
-    if fColumnsCount>0 then
-      sgGrid.ColCount:=sgGrid.ColCount+1;
-    sgGrid.Cells[fColumnsCount, fRowCount]:=pText;
+//    if fColumnsCount>0 then
+//      sgGrid.ColCount:=sgGrid.ColCount+1;
+//    sgGrid.Cells[fColumnsCount, fRowCount]:=pText;
   end;
   Inc(fColumnsCount);
 end;
@@ -72,7 +72,8 @@ begin
     fSL.Add('<TR>');
   end else begin
     if fRowCount>0 then
-      sgGrid.RowCount:=sgGrid.RowCount+1;
+    ;
+//      sgGrid.RowCount:=sgGrid.RowCount+1;
   end;
 
   Inc(fRowCount);
@@ -85,7 +86,7 @@ begin
   if FMode='HTML' then begin
     fSL.Add(' <TD>'+pText+'</TD>');
   end else begin
-    sgGrid.Cells[fColIdx, fRowCount]:=pText;
+//    sgGrid.Cells[fColIdx, fRowCount]:=pText;
   end;
 
   Inc(fColIdx);
@@ -104,14 +105,14 @@ begin
   fSortDirection:=-1;
   fColIdx:=0;
   //
-  for i:=0 to sgGrid.RowCount-1 do begin
-    sgGrid.Rows[i].Clear;
-  end;
+//  for i:=0 to sgGrid.RowCount-1 do begin
+//    sgGrid.Rows[i].Clear;
+//  end;
 
-  sgGrid.RowCount:=2;
-  sgGrid.ColCount:=1;
-  sgGrid.Options:=sgGrid.Options-[goRowSelect];
-  sgGrid.CancelEditor;
+//  sgGrid.RowCount:=2;
+ // sgGrid.ColCount:=1;
+ // sgGrid.Options:=sgGrid.Options-[goRowSelect];
+ // sgGrid.CancelEditor;
 
 end;
 
@@ -122,13 +123,13 @@ begin
   frmTinnMain.panSearchResults.Constraints.MinHeight := 0;
   frmTinnMain.panSearchResults.Height := 1;
 
-  sgGrid.RowCount:=2;
-  sgGrid.ColCount:=1;
+//  sgGrid.RowCount:=2;
+ // sgGrid.ColCount:=1;
 end;
 
 procedure TFrmQueryGrid.acBestFitExecute(Sender: TObject);
 begin
-  sgGrid.AutoSizeColumns;
+//  sgGrid.AutoSizeColumns;
 end;
 
 function WinExec(FileName: string; Visibility: integer): cardinal;
@@ -175,14 +176,14 @@ begin
   if fMode='HTML' then begin
     ExecuteToHTML;
   end else begin
-    sgGrid.AutoSizeColumns;
-    sgGrid.Visible:=True;
+//    sgGrid.AutoSizeColumns;
+//    sgGrid.Visible:=True;
   end;
 end;
 
 procedure TFrmQueryGrid.HideGrid;
 begin
-  sgGrid.Visible:=False;
+//  sgGrid.Visible:=False;
   Clear;
 end;
 

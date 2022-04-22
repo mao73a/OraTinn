@@ -611,4 +611,14 @@ object FrmCodeCompletion: TFrmCodeCompletion
     Left = 112
     Top = 248
   end
+  object dsCompile: TOracleDataSet
+    Optimize = False
+    Left = 184
+    Top = 248
+  end
+  object dsDetail: TOracleDataSet
+    Optimize = False
+    Left = 184
+    Top = 304
+  end
 end

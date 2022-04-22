@@ -24,10 +24,11 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
+			<ImageDebugInfo>true</ImageDebugInfo>
 			<DCC_SymbolReferenceInfo>1</DCC_SymbolReferenceInfo>
 			<DCC_K>false</DCC_K>
 			<DCC_F>false</DCC_F>
-			<DCC_UsePackage>vclimg;vcl;vclx;dbrtl;Rave90VCL;bdertl;VclSmp;rtl;svnui;svn;TeeUI;Tee;TeeDB;vclactnband;vcldb;vcldbx;vcltouch;xmlrtl;dsnap;dsnapcon;vclib;ibxpress;adortl;IndyCore;IndySystem;IndyProtocols;inet;intrawebdb_110_150;Intraweb_110_150;vclie;webdsnap;inetdb;websnap;inetdbbde;inetdbxpress;soaprtl;vclribbon;DbxCommonDriver;DBXInterBaseDriver;DBXMySQLDriver;dbexpress;dbxcds;DbxClientDriver;AzureCloud;dxCoreD15;cxLibraryD15;cxPageControlD15;cxEditorsD15;cxExtEditorsD15;cxGridD15;cxTreeListD15;dxmdsD15;tmsd2011;tmsexd2011;tmsxlsd2011;tmswizd2011;FlexCel_Core;FlexCel_Pdf;FlexCel_XlsAdapter;VCL_FlexCel_Core;FlexCel_Render;FlexCel_Report;VCL_FlexCel_Components;ARExcelRptDXE;SynEdit_R;CodeSiteExpressVcl;dxThemeD15;dxGDIPlusD15;cxDataD15;cxExportD15;cxComponents;auapck</DCC_UsePackage>
+			<DCC_UsePackage>vclimg;vcl;vclx;dbrtl;Rave90VCL;bdertl;VclSmp;rtl;svnui;svn;TeeUI;Tee;TeeDB;vclactnband;vcldb;vcldbx;vcltouch;xmlrtl;dsnap;dsnapcon;vclib;ibxpress;adortl;IndyCore;IndySystem;IndyProtocols;inet;intrawebdb_110_150;Intraweb_110_150;vclie;webdsnap;inetdb;websnap;inetdbbde;inetdbxpress;soaprtl;vclribbon;DbxCommonDriver;DBXInterBaseDriver;DBXMySQLDriver;dbexpress;dbxcds;DbxClientDriver;AzureCloud;dxCoreD15;cxLibraryD15;cxPageControlD15;cxEditorsD15;cxExtEditorsD15;cxGridD15;cxTreeListD15;dxmdsD15;tmsd2011;tmsexd2011;tmsxlsd2011;tmswizd2011;FlexCel_Core;FlexCel_Pdf;FlexCel_XlsAdapter;VCL_FlexCel_Core;FlexCel_Render;FlexCel_Report;VCL_FlexCel_Components;ARExcelRptDXE;CodeSiteExpressVcl;dxThemeD15;dxGDIPlusD15;cxDataD15;cxExportD15;cxComponents;auapck;OraTinnComponents;SynEdit_RXE</DCC_UsePackage>
 			<DCC_DcuOutput>$(DELPHI)\Projects\dcu</DCC_DcuOutput>
 			<DCC_Alignment>1</DCC_Alignment>
 			<DCC_ExeOutput>C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\dcu\</DCC_ExeOutput>
@@ -36,7 +37,6 @@
 			<DCC_E>false</DCC_E>
 			<DCC_S>false</DCC_S>
 			<DCC_N>true</DCC_N>
-			<UsePackages>true</UsePackages>
 			<DCC_WriteableConstants>true</DCC_WriteableConstants>
 			<DCC_RemoteDebug>true</DCC_RemoteDebug>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
@@ -49,8 +49,8 @@
 			<DCC_DebugInformation>false</DCC_DebugInformation>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_2)'!=''">
-			<DCC_UnitSearchPath>c:\ustawienia\_workdir\delphi\OraTinn\SynEdit\Source;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
-			<DCC_DcuOutput>C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\</DCC_DcuOutput>
+			<DCC_UnitSearchPath>c:\ustawienia\_workdir\delphi\OraTinn\PoratSynEdit\Source;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+			<DCC_DcuOutput>C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\dcu\</DCC_DcuOutput>
 			<DCC_BplOutput>C:\Users\Public\Documents\RAD Studio\8.0\Bpl\</DCC_BplOutput>
 			<DCC_DcpOutput>C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\dcu\</DCC_DcpOutput>
 			<DCC_Optimize>false</DCC_Optimize>
