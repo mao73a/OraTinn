@@ -2838,5 +2838,19 @@ object frmTinnMain: TfrmTinnMain
       ShortCut = 16452
       OnExecute = aJumpProcedureExecute
     end
+    object aDuplicateLine: TAction
+      Caption = 'Duplicate line'
+      ShortCut = 49220
+      OnExecute = aDuplicateLineExecute
+    end
+    object aMoveBlockDown: TAction
+      Caption = 'Move Block Down'
+      OnExecute = aMoveBlockDownExecute
+    end
+  end
+  object SynEditOptionsDialog2: TSynEditOptionsDialog
+    UseExtendedStrings = False
+    Left = 520
+    Top = 216
   end
 end

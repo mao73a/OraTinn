@@ -1,18 +1,22 @@
 object FormExternalTools: TFormExternalTools
   Left = 475
   Top = 432
-  Width = 378
-  Height = 173
   Caption = 'External Command'
+  ClientHeight = 168
+  ClientWidth = 463
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -12
+  Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
+  Position = poMainFormCenter
   OnActivate = FormActivate
-  PixelsPerInch = 105
+  DesignSize = (
+    463
+    168)
+  PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
     Left = 9
@@ -46,7 +50,7 @@ object FormExternalTools: TFormExternalTools
   object edCommand: TEdit
     Left = 56
     Top = 64
-    Width = 300
+    Width = 388
     Height = 21
     Hint = 
       'External program name and parameters: <user>, <password>, <host>' +
@@ -57,8 +61,8 @@ object FormExternalTools: TFormExternalTools
     TabOrder = 1
   end
   object Button1: TButton
-    Left = 6
-    Top = 112
+    Left = 85
+    Top = 116
     Width = 73
     Height = 25
     Anchors = [akTop, akRight]
@@ -69,15 +73,14 @@ object FormExternalTools: TFormExternalTools
   object edName: TComboBox
     Left = 56
     Top = 24
-    Width = 301
+    Width = 388
     Height = 21
     Anchors = [akLeft, akTop, akRight]
-    ItemHeight = 13
     TabOrder = 0
   end
   object Button2: TButton
-    Left = 102
-    Top = 112
+    Left = 181
+    Top = 116
     Width = 73
     Height = 25
     Anchors = [akTop, akRight]
@@ -86,8 +89,8 @@ object FormExternalTools: TFormExternalTools
     TabOrder = 3
   end
   object Button3: TButton
-    Left = 198
-    Top = 112
+    Left = 275
+    Top = 116
     Width = 73
     Height = 25
     Anchors = [akTop, akRight]
@@ -96,8 +99,8 @@ object FormExternalTools: TFormExternalTools
     TabOrder = 4
   end
   object btCancel: TButton
-    Left = 290
-    Top = 112
+    Left = 369
+    Top = 116
     Width = 73
     Height = 25
     Anchors = [akTop, akRight]

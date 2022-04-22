@@ -172,6 +172,8 @@ type
     procedure FileNewCmdExecute(Sender: TObject);
     procedure FindExecute(Sender: TObject);
     procedure GotoLineExecute(Sender: TObject);
+    procedure DuplicateLineExecute(Sender: TObject);
+    procedure MoveBlockExecute(Sender: TObject);
     procedure FindAgainExecute(Sender: TObject);
     procedure ReplaceExecute(Sender: TObject);
     procedure synEditorKeyUp(Sender: TObject; var Key: Word;
@@ -909,6 +911,39 @@ begin
  end;
  GotoBox.Free;
 end;
+
+procedure TfrmEditor.DuplicateLineExecute(Sender: TObject);
+var
+ LineNumber : TPoint;
+begin
+  LineNumber.x:=synEditor.CaretX;
+  LineNumber.y:=synEditor.CaretY;
+	synEditor.ExecuteCommand(ecLineStart, 'A', nil);
+	synEditor.ExecuteCommand(ecSelLineEnd, 'A', nil);
+	synEditor.ExecuteCommand(ecCopy, 'A', nil);
+	synEditor.ExecuteCommand(ecLineEnd, 'A', nil);
+	synEditor.ExecuteCommand(ecLineBreak, 'A', nil);
+	synEditor.ExecuteCommand(ecLineStart, 'A', nil);
+	synEditor.ExecuteCommand(ecPaste, 'A', nil);
+	synEditor.ExecuteCommand(ecGotoXY, 'A', @LineNumber);
+
+end;
+
+procedure TfrmEditor.MoveBlockExecute(Sender: TObject);
+var
+ LineNumber : TPoint;
+begin
+  LineNumber.x:=synEditor.CaretX;
+  LineNumber.y:=synEditor.CaretY+1;
+	synEditor.ExecuteCommand(ecCut, 'A', nil);
+	synEditor.ExecuteCommand(ecDeleteLine, 'A', nil);
+	synEditor.ExecuteCommand(ecLineEnd, 'A', nil);
+	synEditor.ExecuteCommand(ecLineBreak, 'A', nil);
+	synEditor.ExecuteCommand(ecPaste, 'A', nil);
+	synEditor.ExecuteCommand(ecGotoXY, 'A', @LineNumber);
+
+end;
+
 
 // This is ripped right from the SynEdit demo files, with a few modifications, thanks guys!
 procedure TfrmEditor.ShowSearchReplaceDialog(AReplace: boolean);

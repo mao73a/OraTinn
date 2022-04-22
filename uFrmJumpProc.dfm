@@ -12,11 +12,15 @@ object FrmJumpProc: TFrmJumpProc
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
+  Position = poMainFormCenter
   Scaled = False
   OnActivate = FormActivate
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  PixelsPerInch = 98
+  DesignSize = (
+    513
+    538)
+  PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
     Left = 16

@@ -40,7 +40,8 @@ uses
   uFormExternalTools in 'uFormExternalTools.pas' {FormExternalTools},
   utypesE in 'utypese.pas',
   uQueryGrid in 'uQueryGrid.pas' {FrmQueryGrid},
-  uFrmJumpProc in 'uFrmJumpProc.pas' {JumpProc};
+  uFrmJumpProc in 'uFrmJumpProc.pas' {JumpProc},
+  VDMUnit;
 
 {$R *.RES}
 
@@ -56,11 +57,22 @@ Function EnumWindowsCallback(Handle: HWnd; Param: LParam): Boolean; Stdcall;
     ClassName: Array[0..30] Of Char;
   Begin
     GetClassName(Handle, ClassName, 30);
+
     Result := (StrIComp(ClassName, 'TfrmTinnMain') = 0) And
      (SendMessage(Handle, WM_FINDINSTANCE, 0, 0) = MyUniqueConst);
   End;
+var
+  vCurrVirtual : BOOL;
+  vMyClass : boolean;
+  vOwnerHWND : HWND;
 Begin
-  Result := Not IsMyClass; { needs True to continue }
+  vMyClass:=IsMyClass;
+  if vMyClass then
+  begin
+    vOwnerHWND:=GetWindow(Handle, GW_OWNER );
+    vCurrVirtual:=IsOnCurrentDesktop(vOwnerHWND);//sprawdza czy okno na aktualnym wirtualnym dekstopie https://stackoverflow.com/questions/41803962/using-ivirtualdesktopmanager-in-delphi
+  end;
+  Result := Not (vMyClass and vCurrVirtual); { needs True to continue }
   If Not Result Then Previous := Handle;
 End;
 

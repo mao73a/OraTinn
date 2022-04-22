@@ -246,6 +246,9 @@ type
     cbSyntax: TComboBox;
     aJumpProcedure: TAction;
     ToolButton13: TToolButton;
+    SynEditOptionsDialog2: TSynEditOptionsDialog;
+    aDuplicateLine: TAction;
+    aMoveBlockDown: TAction;
     procedure WindowArrange1Execute(Sender: TObject);
     procedure WindowCascade1Execute(Sender: TObject);
     procedure WindowMinimizeAll1Execute(Sender: TObject);
@@ -348,6 +351,8 @@ type
     procedure actSQLExecuteExecute(Sender: TObject);
     procedure actSQLExecuteToHTMLExecute(Sender: TObject);
     procedure aJumpProcedureExecute(Sender: TObject);
+    procedure aDuplicateLineExecute(Sender: TObject);
+    procedure aMoveBlockDownExecute(Sender: TObject);
 
   private
     { Private declarations }
@@ -1179,7 +1184,7 @@ var
   intPos : integer;
   tmpStr : string;
   stream : TStream;
-  WinDir: array [0..MAX_PATH-1] of char;
+//  WinDir: array [0..MAX_PATH-1] of char;
   ShortcutsFileName : string;
 begin
 
@@ -1275,7 +1280,7 @@ begin
   FEditorOptions.Gutter.Font.Color    := iniFile.ReadInteger('Editor Settings', 'GutterFontColor', 0);
   FEditorOptions.Gutter.Width         := iniFile.ReadInteger('Editor Settings', 'GutterWidth', 20);
  	FEditorOptions.Gutter.DigitCount    := iniFile.ReadInteger('Editor Settings', 'GutterDigitCount', 2);
-  FEditorOptions.Gutter.AutoSize      := iniFile.ReadBool('Editor Settings', 'GutterAutoSize', True);  //JCFaria 
+  FEditorOptions.Gutter.AutoSize      := iniFile.ReadBool('Editor Settings', 'GutterAutoSize', True);  //JCFaria
  	FEditorOptions.Gutter.LeadingZeros  := iniFile.ReadBool('Editor Settings', 'GutterLeadingZeros', false);
  	FEditorOptions.Gutter.ZeroStart     := iniFile.ReadBool('Editor Settings', 'GutterZeroStart', false);
  	FEditorOptions.Gutter.Visible       := iniFile.ReadBool('Editor Settings', 'GutterVisible', true);
@@ -1366,8 +1371,8 @@ begin
   else
     strSearchFileMaskHistory := '';
 
-  SetString(ShortcutsFileName, WinDir, GetWindowsDirectory(WinDir, MAX_PATH));
-  ShortcutsFileName := ShortcutsFileName + '\shortcuts.tinn';
+//  SetString(ShortcutsFileName, WinDir, GetWindowsDirectory(WinDir, MAX_PATH));
+  ShortcutsFileName := iniFilePath + '\shortcuts.tinn';
   if FileExists(ShortcutsFileName) then
   begin
     stream := TFileStream.Create(ShortcutsFileName, fmOpenRead);
@@ -1666,7 +1671,7 @@ procedure TfrmTinnMain.WriteIniFile;
 var
  i : integer;
  SearchList : TStringList;
- WinDir: array [0..MAX_PATH-1] of char;
+// WinDir: array [0..MAX_PATH-1] of char;
  ShortcutsFileName : string;
  stream : TStream;
 begin
@@ -1820,8 +1825,8 @@ begin
   end;
   SearchList.Free;
 
-  SetString(ShortcutsFileName, WinDir, GetWindowsDirectory(WinDir, MAX_PATH));
-  ShortcutsFileName := ShortcutsFileName + '\shortcuts.tinn';
+//  SetString(ShortcutsFileName, WinDir, GetWindowsDirectory(WinDir, MAX_PATH));
+  ShortcutsFileName := iniFilePath + '\shortcuts.tinn';
   if FileExists(ShortcutsFileName) then
   	DeleteFile(ShortcutsFileName);
   stream := TFileStream.Create(ShortcutsFileName, fmCreate);
@@ -1966,6 +1971,17 @@ procedure TfrmTinnMain.actTsStandardExecute(Sender: TObject);
 begin
 	pgFiles.Style := tsTabs;
   tsStandard1.Checked := true;
+end;
+
+procedure TfrmTinnMain.aDuplicateLineExecute(Sender: TObject);
+var
+ i : integer;
+begin
+	if (pgFiles.PageCount > 0) then
+  begin
+ 		i := FindTopWindow;
+ 		(Self.MDIChildren[i] as tfrmEditor).DuplicateLineExecute(Sender);
+  end;
 end;
 
 procedure TfrmTinnMain.actTsButtonsExecute(Sender: TObject);
@@ -2228,8 +2244,10 @@ end;
 procedure TfrmTinnMain.actShowEditorOptionsExecute(Sender: TObject);
 var
 	i : integer;
+   qqqEditorOptions : TSynEditorOptionsContainer;
 begin
 
+{
   FEditorOptions.Gutter.ShowLineNumbers := miShowLineNum.Checked;
   if actShowSpecialChar.Checked then
   	FEditorOptions.Options := FEditorOptions.Options + [eoShowSpecialChars]
@@ -2238,7 +2256,7 @@ begin
 
   if (Self.MDIChildCount > 0) then
     FEditorOptions.Options := (Self.MDIChildren[FindTopWindow] as TfrmEditor).synEditor.Options;
-
+}
   if SynEditOptionsDialog1.Execute(FEditorOptions) then
   begin
     FEditorOptions.Options := FEditorOptions.Options + [eoTabIndent];
@@ -3299,6 +3317,7 @@ begin
   end;
 end;
 
+
 procedure TfrmTinnMain.ModifyOnCreate;
 var
  vWidth : Integer;
@@ -3326,6 +3345,10 @@ begin
   externalTools.MenuReload;
   frmExplorer.tvFunctions.Font.Size := FEditorOptions.Gutter.Font.Size;
   frmExplorer.tvDB.Font.Size := FEditorOptions.Gutter.Font.Size;
+
+  aMoveBlockDown.SecondaryShortCuts.AddObject('CTRL+ALT+ArrowDown', TObject(Menus.ShortCut(VK_DOWN,  [ssCTRL, ssSHIFT])));
+  //(aMoveBlockDown, 'CTRL+SHIFT+ArrowDown', VK_DOWN, [ssCTRL, ssSHIFT]);
+
 end;
 
 procedure TfrmTinnMain.actConnectExecute(Sender: TObject);
@@ -3511,6 +3534,18 @@ begin
     vForm.Free;
   end;
 end;
+
+procedure TfrmTinnMain.aMoveBlockDownExecute(Sender: TObject);
+var
+ i : integer;
+begin
+	if (pgFiles.PageCount > 0) then
+  begin
+ 		i := FindTopWindow;
+ 		(Self.MDIChildren[i] as tfrmEditor).MoveBlockExecute(Sender);
+  end;
+end;
+
 
 Initialization
   WM_FINDINSTANCE := RegisterWindowMessage('Editor: find previous instance');
