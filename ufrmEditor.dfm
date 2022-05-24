@@ -300,6 +300,10 @@ object frmEditor: TfrmEditor
       Caption = 'Highlight'
       OnClick = Highlight1Click
     end
+    object RefactorRename1: TMenuItem
+      Caption = 'Refactor Rename'
+      OnClick = RefactorRename1Click
+    end
   end
   object alEdit: TActionList
     Images = frmTinnMain.ToolbarImages

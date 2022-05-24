@@ -7,7 +7,8 @@ uses
   StdCtrls, SynEditHighlighter, SynHighlighterSQL, SynEdit, ComCtrls,
   ExtCtrls, SynCompletionProposal, ImgList, ToolWin, Db, Menus,
   uFrmCompileErrors, inifiles, uAutoComplete, uPLSQLLExer, SynEditTypes, uQueryGrid,
-  ActnList, Oracle, OracleData;
+  ActnList, Oracle, OracleData,
+  RegularExpressions;
 
 const DefaultDelay : Integer=10;
       QUERY_BREAK_AFTER = 1000;
@@ -72,6 +73,7 @@ type
     OracleSession1: TOracleSession;
     dsCompile: TOracleDataSet;
     dsDetail: TOracleDataSet;
+    TimerLoadOnClick: TTimer;
     procedure FormDestroy(Sender: TObject);
     procedure tvFunctionsChange(Sender: TObject; Node: TTreeNode);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -91,6 +93,9 @@ type
     procedure FindCurrentBlock;
     procedure tvDbDblClick(Sender: TObject);
     procedure aWarningsExecute(Sender: TObject);
+    procedure LoadFromFile(pIniFile: TIniFile);
+    procedure TimerLoadOnClickTimer(Sender: TObject);
+    procedure RefactorChangeName(pOldName, pNewName : String; ALine : Integer);
   private
     { Private declarations }
     fWorkerThread : TThread;
@@ -119,13 +124,17 @@ type
     fObjectsLoaded : Boolean;
     FHighlightList: String;
     fTimerExecution : Boolean;
+    TimerLoadOnClick_pPackage : String;
+    TimerLoadOnClick_pFunction : String;
+    fPackageNameMatchList : TStrings;
     procedure SetEditor(const Value: TCustomSynEdit);
     procedure SetModificationMark;
     procedure ShowFunction(pFunction : String; pCount : Integer);
     procedure LoadObjectsList;
     procedure SetHighlightList(const Value: String);
     function GetQueryText : String;
-
+    function PackageNameMatch(pSQLObjectName,pLogonUsername : String) : Boolean;
+    function FastCharIndexToRow(  Index,pPrevLine : Integer; var pPrevChars: integer): Integer;
 //    fEditor : TCustomSynEdit;
   public
     { Public declarations }
@@ -247,7 +256,7 @@ type
   end;
 
 implementation
-uses ufrmMain, ufrmEditor, uTypesE, ShellAPI;
+uses ufrmMain, ufrmEditor, uTypesE, ShellAPI, uPLSQLRefactor, ClipBrd;
 
 {$R *.DFM}
 
@@ -856,6 +865,7 @@ begin
     fEdFunctions:= TStringList.Create;
     fAutoCompleteList := TStringList.Create;
     fPLSLexer := TPLSLexer.Create;
+    fPackageNameMatchList:=TStringList.Create;
     fConnectButton:=AConnectButton;
     fspConnection:=aStatusPanel;
     fConnectButton.DropdownMenu:= pmConnectMenu;
@@ -895,6 +905,8 @@ begin
     dsCompile.Session:=nil;
     fAutoComplete.Editor:=nil;
     fAutoComplete.Free;
+    fPackageNameMatchList.Free;
+    fPackageNameMatchList:=nil;
     vTrace:='3';
     if fWorkerThread <> nil then  begin
       TScanKeywordThread(fWorkerThread).Shutdown;
@@ -1419,6 +1431,53 @@ begin
 {*}end;
 end;
 
+
+function TFrmCodeCompletion.PackageNameMatch(pSQLObjectName,pLogonUsername : String) : Boolean;
+var
+  vPos1, vPos2, vPos3, vIdx : Integer;
+  vObjNamePattern, vSchemaAcceptPattern, vSchemaRejectPattern : String;
+  vToParse : String;
+  regexpr : TRegEx;
+  match   : TMatch;
+  group   : TGroup;
+  i       : integer;
+begin
+  Result:=True;
+  for vIdx:=0 to fPackageNameMatchList.count-1 do
+  begin
+    vToParse := fPackageNameMatchList.Strings[vIdx]+';';
+    vPos1 := pos('=', vToParse);
+    vToParse:=copy(vToParse,vPos1+1,99999);
+    vPos1 := pos(';', vToParse);
+    vObjNamePattern := copy(vToParse,1,vPos1-1);
+    vToParse:=copy(vToParse,vPos1+1,99999);
+
+    vPos1 := pos(';', vToParse);
+    vSchemaAcceptPattern := copy(vToParse,1,vPos1-1);
+    vToParse:=copy(vToParse,vPos1+1,99999);
+
+    vPos1 := pos(';', vToParse);
+    vSchemaRejectPattern := copy(vToParse,1,vPos1-1);
+
+    if TRegEx.IsMatch(pSQLObjectName, vObjNamePattern,[roIgnoreCase]) then
+    begin
+      if TRegEx.IsMatch(pLogonUsername, vSchemaAcceptPattern,[roIgnoreCase]) then
+      begin
+        if (vSchemaRejectPattern<>'') and (TRegEx.IsMatch(pLogonUsername, vSchemaRejectPattern,[roIgnoreCase])) then
+        begin
+          Result:=False;
+        end;
+      end
+      else
+      begin
+        Result:=False;
+      end;
+    end;
+    if Result=False then
+      exit;
+  end;
+end;
+
 procedure TFrmCodeCompletion.Compile;
 var
  vIdx : Integer;
@@ -1454,6 +1513,13 @@ begin
     for vIdx:=0 to 10 do begin
       if pos('PACKAGE',UpperCase(dsCompile.SQL[vIdx]))<>0 then begin
         vObjectType:='PACKAGE';
+        if not PackageNameMatch(TScanKeywordThread(fWorkerThread).SQLObjectName,UpperCase(dsCompile.Session.LogonUsername))  then
+        begin
+          if IDNO=Application.MessageBox(PChar('Package name doesn''t match schema pattern. Continue anyway?'),'Query',MB_ICONQUESTION+MB_YESNO) then
+            exit;
+        end;
+
+
         if pos('BODY',UpperCase(dsCompile.SQL[vIdx]))<>0 then
         begin
            vObjectType:='PACKAGE_BODY';
@@ -1752,14 +1818,24 @@ begin
      ShowFunction(pFunction, 1)
    else
    begin
-     ActiveControl:=tsFile;
-     Load(pPackage, 'PACKAGE_BODY');
-     ShowFunction(pFunction, 1);
+//     ActiveControl:=tsFile;
+     TimerLoadOnClick_pPackage:=pPackage;
+     TimerLoadOnClick_pFunction:=pFunction;
+     TimerLoadOnClick.Enabled:=True;
    end;
 {*}except
 {*}  raise CException.Create('GotoFunction',0,self);
 {*}end;
 end;
+
+
+procedure TFrmCodeCompletion.TimerLoadOnClickTimer(Sender: TObject);
+begin
+   TimerLoadOnClick.Enabled:=False;
+   Load(TimerLoadOnClick_pPackage, 'PACKAGE_BODY');
+   ShowFunction(TimerLoadOnClick_pFunction, 1);
+end;
+
 
 
 procedure TFrmCodeCompletion.Sort1Click(Sender: TObject);
@@ -2303,6 +2379,8 @@ begin
       end;
     end;
     vToolsList.Free;
+
+
   except
     raise CException.Create('LoadFromFile',0,self);
   end;
@@ -2610,6 +2688,109 @@ procedure TFrmCodeCompletion.aWarningsExecute(Sender: TObject);
 begin
   aWarnings.Checked:=not aWarnings.Checked;
 end;
+
+
+procedure TFrmCodeCompletion.LoadFromFile(pIniFile: TIniFile);
+begin
+  if Assigned(fPackageNameMatchList) then
+  begin
+    pIniFile.ReadSectionValues('PackageNameMatch', fPackageNameMatchList);
+  end;
+end;
+
+
+function TFrmCodeCompletion.FastCharIndexToRow(
+  Index,pPrevLine : Integer; var pPrevChars: integer): Integer;
+{ Index is 0-based; Result.x and Result.y are 1-based }
+var
+ x, y: integer;
+begin
+  try
+    x := 0;
+    y := pPrevLine-1;
+    while y < fEditor.Lines.Count do
+    begin
+      x := Length(fEditor.Lines[y]);
+      if pPrevChars + x + 2 > Index then
+      begin
+        x := Index - pPrevChars;
+        break;
+      end;
+      Inc(pPrevChars, x + 2);
+      x := 0;
+      Inc(y);
+    end;
+    // Result.Char := x + 1;
+    Result := y + 1;
+  except
+    raise CException.Create('FastCharIndexToRow2',0,self);
+  end;
+end;
+
+procedure TFrmCodeCompletion.RefactorChangeName(pOldName, pNewName : String; ALine : Integer);
+var
+  fPLSRefactor : TPLSRefactor;
+  fHighlighter: TSynCustomHighlighter;
+
+  vTokenId, vLine, vLineTmp : Integer;
+  vPrevToken, s : String;
+  vTokenMatching : Boolean;
+begin
+  fPLSRefactor:=nil;  fHighlighter:=nil;  vPrevToken:='';
+  fPLSRefactor:=TPLSRefactor.Create;
+  fHighlighter := TSynSQLSyn.Create(nil);
+
+  try
+
+    TSynSQLSyn(fHighlighter).SQLDialect := SQLOracle;
+    fHighlighter.ResetRange;
+    fHighlighter.SetLine(fEditor.Text, 1);
+    vLine:=1; vLineTmp:=0;
+    while not fHighlighter.GetEol do
+    begin
+      while (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkSpace)) and (not fHighlighter.GetEol) do
+        fHighlighter.Next;
+      if  fHighlighter.GetEol then
+        break;
+
+      s := fHighlighter.GetToken;
+      s:=UpperCase(s);
+      if (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkPLSQL)) then
+      begin
+        if fPLSRefactor.CheckToken(s, vTokenId) then begin
+          vLine:=FastCharIndexToRow(fHighlighter.GetTokenPos, vLine, vLineTmp);
+          if vPrevToken='END' then
+            fPLSRefactor.CloseDoubleEndToken(s,vTokenId, vLine);
+          fPLSRefactor.PutToken(vTokenId, vLine,s);
+          try
+            fPLSRefactor.NewStructure;
+          except
+          end;
+        end;
+      end;
+      vPrevToken:=s;
+
+      fHighlighter.Next;
+    end;
+    s:='';
+
+    fPLSRefactor.FindMatichngBlocks(ALine);
+    fPLSRefactor.OutputResultBlocks(s);
+
+ //TODO wsrod blokow znalezc deklaracje i zmienic token w pierwszym bloku  wktorym jest deklaracja a jesli nie ma w zadnym to w calym pliku
+
+    Clipboard.AsText := s;
+
+
+  finally
+    if Assigned(fPLSRefactor) then
+      fPLSRefactor.Free;
+    if Assigned(fHighlighter) then
+      fHighlighter.Free;
+  end;
+
+end;
+
 
 end.
 

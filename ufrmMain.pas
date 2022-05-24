@@ -249,6 +249,7 @@ type
     SynEditOptionsDialog2: TSynEditOptionsDialog;
     aDuplicateLine: TAction;
     aMoveBlockDown: TAction;
+    Copyinipath1: TMenuItem;
     procedure WindowArrange1Execute(Sender: TObject);
     procedure WindowCascade1Execute(Sender: TObject);
     procedure WindowMinimizeAll1Execute(Sender: TObject);
@@ -353,6 +354,7 @@ type
     procedure aJumpProcedureExecute(Sender: TObject);
     procedure aDuplicateLineExecute(Sender: TObject);
     procedure aMoveBlockDownExecute(Sender: TObject);
+    procedure Copyinipath1Click(Sender: TObject);
 
   private
     { Private declarations }
@@ -463,6 +465,7 @@ type
     procedure BuildProjectMRU(var ioMenuItem : TMenuItem);
     procedure UpdateProjectMRU(var ioMenuItem : TMenuItem; iFileName : string);
     procedure RecentProjectFileClick(Sender: TObject);
+    procedure RefactorRename(Sender: TObject);
   end;
 
 var
@@ -1193,6 +1196,7 @@ begin
 
   // Read the ini file for settings
   iniFile := TIniFile.create(iniFilePath + 'Tinn.ini');
+
   Self.WindowState := TWindowState(iniFile.ReadInteger('Form Position','WindowState',0));
   if (Self.WindowState = wsNormal) then
   begin
@@ -2789,6 +2793,20 @@ begin
   end;
 end;
 
+procedure TfrmTinnMain.Copyinipath1Click(Sender: TObject);
+var
+  StrUserName: PChar;
+  Size: DWord;
+  vPath : String;
+begin
+  Size:=250;
+  GetMem(StrUserName, Size);
+  GetUserName(StrUserName, Size);
+  vPath:='c:\Users\'+StrPas(StrUserName)+'\AppData\Local\VirtualStore\Program Files (x86)\OraTinn\Tinn.ini';
+  Clipboard.AsText := vPath;
+  ShowMEssage(vPath+#13#10+'Copied to clippboard.');
+end;
+
 procedure TfrmTinnMain.MinimizeTinnAfterLastFile;
 begin
   if (boolMinimizeTinnAfterLastFile) then
@@ -3337,6 +3355,7 @@ begin
         panProjectDockSite.Width:=vWidth;
       end;
     end;
+    frmExplorer.LoadFromFile(IniFile);
   end;
   FEditorOptions.Options := FEditorOptions.Options-[eoScrollPastEol];
   tbSettingsBar.Visible:=False;
@@ -3421,7 +3440,7 @@ begin
   Screen.Cursor:=crDefault;
   if E is CException then
     Application.MessageBox(PChar(CException(E).ReadHistory[0] + #13#10 + #13#10 +
-                        '__________________________________________________________________' + #13#10+
+                        '________________________________________________' + #13#10+
                         CException(E).ReadHistory.GetText), PChar('Handled Application Error'), MB_ICONEXCLAMATION)
   else
     Application.MessageBox(PChar(E.message),PChar('Application Error'),MB_ICONEXCLAMATION);
@@ -3546,6 +3565,20 @@ begin
   end;
 end;
 
+
+procedure TfrmTinnMain.RefactorRename(Sender: TObject);
+var
+  vOldText, vText : String;
+begin
+  vOldText:=SynMR.Editor.GetWordAtRowCol(SynMR.Editor.CaretXY);
+  if vOldText = '' then
+    exit;
+  vText := vOldText;
+  if InputQuery('Refactoring rename', 'Enter new name:', vText) then
+  begin
+    frmExplorer.RefactorChangeName(vOldText, vText, SynMR.Editor.CaretXY.Line);
+  end;
+end;
 
 Initialization
   WM_FINDINSTANCE := RegisterWindowMessage('Editor: find previous instance');

@@ -127,6 +127,7 @@
 			<DCCReference Include="uFrmJumpProc.pas">
 				<Form>JumpProc</Form>
 			</DCCReference>
+			<DCCReference Include="uPLSQLRefactor.pas"/>
 			<None Include="Tinn.todo"/>
 			<None Include="changelog.txt">
 				<ContainerId>File</ContainerId>

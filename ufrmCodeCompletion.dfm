@@ -621,4 +621,10 @@ object FrmCodeCompletion: TFrmCodeCompletion
     Left = 184
     Top = 304
   end
+  object TimerLoadOnClick: TTimer
+    Enabled = False
+    OnTimer = TimerLoadOnClickTimer
+    Left = 112
+    Top = 192
+  end
 end

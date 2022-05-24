@@ -151,6 +151,7 @@ type
     N14: TMenuItem;
     SelectAllmenu: TMenuItem;
     Highlight1: TMenuItem;
+    RefactorRename1: TMenuItem;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure Tile1Click(Sender: TObject);
     procedure Cascade1Click(Sender: TObject);
@@ -233,6 +234,7 @@ type
     procedure synEditorPaint(Sender: TObject; ACanvas: TCanvas);
     procedure synEditorScroll(Sender: TObject; ScrollBar: TScrollBarKind);
     procedure Highlight1Click(Sender: TObject);
+    procedure RefactorRename1Click(Sender: TObject);
 
   private
     { Private declarations }
@@ -1123,6 +1125,8 @@ begin
   else
  		DoSearchReplaceText(FALSE, false);
 end;
+
+
 
 procedure TfrmEditor.ReplaceExecute(Sender: TObject);
 begin
@@ -2337,11 +2341,10 @@ begin
       Editor.GetHighlighterAttriAtRowCol(frmTinnMain.frmExplorer.fHighilightWordArr[i].BufferCoord,
          Symbol, Attrib);
       if Assigned(Attrib) then begin
-        Editor.Canvas.Font.Style := Attrib.Style;
-        Editor.Canvas.Brush.Color := GetColorForIdx(frmTinnMain.frmExplorer.fHighilightWordArr[i].ColorIdx);
-
         Pix:=Editor.RowColumnToPixels(Editor.BufferToDisplayPos(
           frmTinnMain.frmExplorer.fHighilightWordArr[i].BufferCoord));
+        Editor.Canvas.Font.Style := Attrib.Style;
+        Editor.Canvas.Brush.Color := GetColorForIdx(frmTinnMain.frmExplorer.fHighilightWordArr[i].ColorIdx);
         Editor.Canvas.TextOut(Pix.X, Pix.Y, frmTinnMain.frmExplorer.fHighilightWordArr[i].Word);
       end;
     end;
@@ -2686,6 +2689,10 @@ begin
   frmTinnMain.tbsHghlightClick(nil);
 end;
 
+procedure TfrmEditor.RefactorRename1Click(Sender: TObject);
+begin
+   frmTinnMain.RefactorRename(Sender);
+end;
 end.
 
 

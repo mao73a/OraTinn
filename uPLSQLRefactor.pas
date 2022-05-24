@@ -1,4 +1,4 @@
-unit uPLSQLLexer;
+unit uPLSQLRefactor;
 
 interface
 uses sysutils, classes;
@@ -28,16 +28,17 @@ type
   end;
 
  TBlocks = Array[0..2048] of TBlock;
-
+ TFoundResultBlocks = Array of TBlock;
  TStrunctureElements = Array of TStructureElement;
 
-type TPLSLexer = class(TPersistent)
+type TPLSRefactor = class(TPersistent)
   private
     fstos : Array[0..1023] of TStructureElement;
     fEndTokenList : String;
     fFunctionIndexBuilt : Boolean;
     fFunctionIndex : Array[0..1023] of Integer;
     fFunctionIndexCount : Integer;
+
     procedure BuildIndex;
   protected
     procedure Assign(Source: TPersistent);override;
@@ -46,19 +47,22 @@ type TPLSLexer = class(TPersistent)
     fBlockCount : Integer;
     fStackSize : Integer;
     fBlocks : TBlocks;
-  
+    fFoundResultBlocks : TFoundResultBlocks;
+
     function CheckToken(p_token : String; var p_tokenId : Integer) : Boolean;
     procedure PutToken(p_tokenId,p_nrLinii : Integer; p_tekst:String);
     procedure NewStructure;
     function isEmpty : Boolean;
     function FindCurrentBlock(ALine : Integer; var pBegin, pEnd : Integer) : Boolean;
-    function FindCurrentFunction(ALine : Integer; var pBegin, pEnd : Integer) : Integer;
+    function FindMatichngBlocks(ALine: Integer): Integer;
     function isTOken(pString : String):Boolean;
     procedure Clear;
     procedure CloseDoubleEndToken(var p_token : String; var ptokenId : Integer;
         p_Line : Integer);
     destructor Destroy;override;
     constructor Create;
+    procedure OutputBlocks(var pOut : String);
+    procedure OutputResultBlocks(var pOut : String);
 
 end;
 
@@ -77,7 +81,7 @@ const gLangStructures : TLangStructure =
    );
 implementation
 
-procedure TPLSLexer.CloseDoubleEndToken(var p_token : String; var ptokenId : Integer;
+procedure TPLSRefactor.CloseDoubleEndToken(var p_token : String; var ptokenId : Integer;
     p_Line : Integer);
 begin
   if fStackSize>0 then begin
@@ -94,7 +98,7 @@ begin
   end;
 end;
 
-function TPLSLexer.CheckToken(p_token : String; var p_tokenId : Integer) : Boolean;
+function TPLSRefactor.CheckToken(p_token : String; var p_tokenId : Integer) : Boolean;
 var
   v_i, v_badany, v_tokenId, vLastId : Integer;
   vToken : String;
@@ -110,7 +114,7 @@ begin
   end;
 end;
 
-procedure TPLSLexer.PutToken(p_tokenId,p_nrLinii : Integer; p_tekst:String );
+procedure TPLSRefactor.PutToken(p_tokenId,p_nrLinii : Integer; p_tekst:String );
 begin
 // SetLength(fstos,Length(fstos)+1);
  if fStackSize<1023 then begin
@@ -121,7 +125,7 @@ begin
  end;
 end;
 
-procedure TPLSLexer.NewStructure;
+procedure TPLSRefactor.NewStructure;
 var
  v_nrStruktury : Integer;
  v_i : Integer;
@@ -173,7 +177,7 @@ begin
    fFunctionIndexBuilt:=False;
 end;
 
-procedure TPLSLexer.Clear;
+procedure TPLSRefactor.Clear;
 begin
   fFunctionIndexBuilt:=False;
   fFunctionIndexCount:=0;
@@ -181,19 +185,20 @@ begin
   fBlockCount:=0;
 end;
 
-function TPLSLexer.isEmpty: Boolean;
+function TPLSRefactor.isEmpty: Boolean;
 begin
   if fStackSize=0 then result:=True
   else result:=False;
 end;
 
-destructor TPLSLexer.Destroy;
+destructor TPLSRefactor.Destroy;
 begin
+  SetLength(fFoundResultBlocks, 0);
   Clear;
   inherited;
 end;
 
-constructor TPLSLexer.Create;
+constructor TPLSRefactor.Create;
 var
  i : Integer;
  numOfRules : Integer;
@@ -213,45 +218,35 @@ begin
   end;
 end;
 
-procedure TPLSLexer.Assign(Source: TPersistent);
+procedure TPLSRefactor.Assign(Source: TPersistent);
 var
  i : Integer;
 begin
-  fBlockCount:=TPLSLexer(Source).fBlockCount;
-  for i:=0 to TPLSLexer(Source).fBlockCount-1 do begin
-    fBlocks[i] := TPLSLexer(Source).fBlocks[i];
+  fBlockCount:=TPLSRefactor(Source).fBlockCount;
+  for i:=0 to TPLSRefactor(Source).fBlockCount-1 do begin
+    fBlocks[i] := TPLSRefactor(Source).fBlocks[i];
   end;
   fFunctionIndexBuilt:=False;
 end;
 
-procedure TPLSLexer.AssignTo(Dest: TPersistent);
+procedure TPLSRefactor.AssignTo(Dest: TPersistent);
 var
  i : Integer;
 begin
-  TPLSLexer(Dest).fBlockCount:=fBlockCount;
+  TPLSRefactor(Dest).fBlockCount:=fBlockCount;
   for i:=0 to fBlockCount-1 do begin
-    TPLSLexer(Dest).fBlocks[i] := fBlocks[i];
+    TPLSRefactor(Dest).fBlocks[i] := fBlocks[i];
   end;
   fFunctionIndexBuilt:=False;
 end;
 
 
-function TPLSLexer.FindCurrentBlock(ALine: Integer; var pBegin,
+function TPLSRefactor.FindCurrentBlock(ALine: Integer; var pBegin,
   pEnd: Integer): Boolean;
 var
  i, vNew, currFunction, matchedBlockId, vTmp : Integer;
 begin
-  {if not fFunctionIndexBuilt then BuildIndex;
-  currFunction:=-1;
-  //find current function
-  for i:=0 to fFunctionIndexCount-1 do begin
-    if (ALine>=fBlocks[fFunctionIndex[i]].startPos) and
-       (ALine<=fBlocks[fFunctionIndex[i]].endPos) then begin
-      currFunction:=i;
-      break;
-    end;
-  end;}
-  currFunction:=FindCurrentFunction(ALine, vTmp, vTmp);
+//  currFunction:=FindCurrentFunction(ALine, vTmp, vTmp);
   if currFunction=-1 then result:=False
   else begin
     i:=fFunctionIndex[currFunction];
@@ -266,13 +261,13 @@ begin
   end;
 end;
 
-procedure TPLSLexer.BuildIndex;
+procedure TPLSRefactor.BuildIndex;
 var i,vNew : Integer;
 begin
   if not fFunctionIndexBuilt then begin//build functions index
     fFunctionIndexCount:=0;
     for i:=0 to fBlockCount-1 do begin
-      if fBlocks[i].structureId in [1,2] then begin
+      if fBlocks[i].structureId in [1,2,3] then begin
         vNew:=fFunctionIndexCount;
         if fFunctionIndexCount<1023 then
           Inc(fFunctionIndexCount)
@@ -286,7 +281,7 @@ begin
   end;
 end;
 
-function TPLSLexer.isTOken(pString: String): Boolean;
+function TPLSRefactor.isTOken(pString: String): Boolean;
 var i : Integer;
 begin
   result:=False;
@@ -304,25 +299,58 @@ begin
     result:=True;
 end;
 
-function TPLSLexer.FindCurrentFunction(ALine: Integer;
-   var pBegin, pEnd: Integer): Integer;
+function TPLSRefactor.FindMatichngBlocks(ALine: Integer): Integer;
 var
- i:Integer;
+ i,j:Integer;
 begin
   if not fFunctionIndexBuilt then BuildIndex;
   result:=-1;
   //find current function
+  SetLength(fFoundResultBlocks, 0);
   for i:=0 to fFunctionIndexCount-1 do begin
     if (ALine>=fBlocks[fFunctionIndex[i]].startPos) and
        (ALine<=fBlocks[fFunctionIndex[i]].endPos) then begin
-      pBegin:=fBlocks[fFunctionIndex[i]].startPos;
-      pEnd:=fBlocks[fFunctionIndex[i]].endPos;
-      result:=i;
-      break;
+      j:=Length(fFoundResultBlocks);
+      SetLength(fFoundResultBlocks, j+1);
+      fFoundResultBlocks[j]:=fBlocks[fFunctionIndex[i]];
     end;
+  end;
+  result:=j;
+end;
+
+procedure TPLSRefactor.OutputBlocks(var pOut : String);
+var
+ i: Integer;
+begin
+  for i:=0 to fBlockCount-1  do
+  begin
+   pOut:=pOut+IntToStr(i)+': '+ IntToStr(fBlocks[i].structureId)+' start:'+IntToStr(fBlocks[i].startPos)+' end:'+IntToStr(fBlocks[i].endPos)+#13#10;
   end;
 end;
 
+procedure TPLSRefactor.OutputResultBlocks(var pOut : String);
+var
+ i: Integer;
+begin
+  for i := 0 to Length(fFoundResultBlocks)-1 do
+  begin
+    pOut:=pOut+IntToStr(i)+': '+ IntToStr(fFoundResultBlocks[i].structureId)+' start:'+IntToStr(fFoundResultBlocks[i].startPos)+' end:'+IntToStr(fFoundResultBlocks[i].endPos)+#13#10;
+  end;
+end;
+
+
+
 end.
+
+
+
+
+
+
+
+
+
+
+
 
 

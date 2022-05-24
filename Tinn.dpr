@@ -7,8 +7,7 @@ program Tinn;
  http://www.fsf.org/copyleft/gpl.html for further information.
  
 }
-{%ToDo 'Tinn.todo'}
-{%File 'changelog.txt'}
+
 
 uses
   FastMM4,
@@ -38,10 +37,11 @@ uses
   uFrmCompileErrors in 'uFrmCompileErrors.pas' {FrmCompileErrors},
   uPLSQLLExer in 'uPLSQLLExer.pas',
   uFormExternalTools in 'uFormExternalTools.pas' {FormExternalTools},
-  utypesE in 'utypese.pas',
+  utypese in 'utypese.pas',
   uQueryGrid in 'uQueryGrid.pas' {FrmQueryGrid},
   uFrmJumpProc in 'uFrmJumpProc.pas' {JumpProc},
-  VDMUnit;
+  VDMUnit,
+  uPLSQLRefactor in 'uPLSQLRefactor.pas';
 
 {$R *.RES}
 

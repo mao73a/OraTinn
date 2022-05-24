@@ -2326,6 +2326,10 @@ object frmTinnMain: TfrmTinnMain
         Caption = 'Reload'
         OnClick = Reload1Click
       end
+      object Copyinipath1: TMenuItem
+        Caption = 'Ini path'
+        OnClick = Copyinipath1Click
+      end
     end
   end
   object alFile: TActionList
