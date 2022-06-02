@@ -3,7 +3,7 @@ unit uPLSQLRefactor;
 interface
 
 uses
-  sysutils, classes;
+  sysutils, classes, SynEditTypes;
 
 type
   TStructure = record
@@ -12,18 +12,20 @@ type
   end;
 
   TLangStructure = record
-    tokens: array[1..12] of string;
-    structures: array[1..9] of TStructure
+    tokens: array[1..13] of string;
+    structures: array[1..10] of TStructure
   end;
 
   TStructureElement = record
     token: Integer;
-    nrLinii: Integer;
-    tekst: string
+    tokenPos: TBufferCoord;
+    tekst: string;
+    nrTokena : Integer
   end;
 
   TBlock = record
-    startPos, endPos: Integer;
+    startPos, endPos: TBufferCoord;
+    startTokenNr, endTokenNr : Integer;
     startStr, endStr: string;
     structureId: Integer;
   end;
@@ -52,14 +54,14 @@ type
     fBlocks: TBlocks;
     fFoundResultBlocks: TFoundResultBlocks;
     function CheckToken(p_token: string; var p_tokenId: Integer): Boolean;
-    procedure PutToken(p_tokenId, p_nrLinii: Integer; p_tekst: string);
+    procedure PutToken(p_tokenId : Integer; p_TokenPos: TBufferCoord; p_tekst: string; p_nrTokena : Integer);
     procedure NewStructure;
     function isEmpty: Boolean;
     function FindCurrentBlock(ALine: Integer; var pBegin, pEnd: Integer): Boolean;
     function FindMatichngBlocks(ALine: Integer): Integer;
-    function isTOken(pString: string): Boolean;
+
     procedure Clear;
-    procedure CloseDoubleEndToken(var p_token: string; var ptokenId: Integer; p_Line: Integer);
+    procedure CloseDoubleEndToken(var p_token: string; var ptokenId: Integer; p_TokenPos: TBufferCoord);
     destructor Destroy; override;
     constructor Create;
     procedure OutputBlocks(var pOut: string);
@@ -69,7 +71,7 @@ type
 const
   gLangStructures: TLangStructure = (
     tokens: ('PROCEDURE', 'FUNCTION', 'BEGIN', 'IF', 'LOOP', 'END', 'FOR', 'END IF', 'END LOOP', 'WHILE', 'CASE',
-      'DECLARE');
+      'DECLARE','CREATE');
     structures: ((
     name: 'function';
     rule: (2, 3, 6)
@@ -97,19 +99,23 @@ const
   ), (
     name: 'when-case';
     rule: (11, 0, 6)
-  ))
+  ), (
+    name: 'create-end';
+    rule: (13, 0, 6)
+  )
+  )
   );
 
 implementation
 
-procedure TPLSRefactor.CloseDoubleEndToken(var p_token: string; var ptokenId: Integer; p_Line: Integer);
+procedure TPLSRefactor.CloseDoubleEndToken(var p_token: string; var ptokenId: Integer; p_TokenPos: TBufferCoord);
 begin
   if fStackSize > 0 then
   begin
     if gLangStructures.tokens[fStos[fStackSize - 1].token] = 'END' then
     begin
       if ((p_token = 'IF') or (p_token = 'LOOP')) and //end if, end loop
-        (fStos[fStackSize - 1].nrLinii = p_Line) then
+        (fStos[fStackSize - 1].tokenPos.Line = p_TokenPos.Line) then
       begin
         p_token := 'END ' + p_token;
          //replace last token  (eg IF) with double token (END IF)
@@ -140,15 +146,17 @@ begin
   end;
 end;
 
-procedure TPLSRefactor.PutToken(p_tokenId, p_nrLinii: Integer; p_tekst: string);
+procedure TPLSRefactor.PutToken(p_tokenId : Integer; p_TokenPos: TBufferCoord; p_tekst: string; p_nrTokena : Integer);
 begin
 // SetLength(fstos,Length(fstos)+1);
   if fStackSize < 1023 then
   begin
     Inc(fStackSize);
     fstos[fStackSize - 1].token := p_tokenId;
-    fstos[fStackSize - 1].nrLinii := p_nrLinii;
+    fstos[fStackSize - 1].tokenPos := p_TokenPos;
     fstos[fStackSize - 1].tekst := p_tekst;
+    fstos[fStackSize - 1].nrTokena := p_nrTokena;
+
   end;
 end;
 
@@ -193,10 +201,12 @@ begin
       if fBlockCount > 2048 - 1 then
         raise Exception.Create('Stack size exceeded');
 
-      fBlocks[vNewPos].startPos := fStos[fStackSize - v_rozmiarStruktury].nrLinii;
+      fBlocks[vNewPos].startPos := fStos[fStackSize - v_rozmiarStruktury].tokenPos;
       fBlocks[vNewPos].startStr := fStos[fStackSize - v_rozmiarStruktury].tekst;
-      fBlocks[vNewPos].endPos := fStos[fStackSize - 1].nrLinii;
+      fBlocks[vNewPos].startTokenNr := fStos[fStackSize - v_rozmiarStruktury].nrTokena;
+      fBlocks[vNewPos].endPos := fStos[fStackSize - 1].tokenPos;
       fBlocks[vNewPos].endStr := fStos[fStackSize - 1].tekst;
+      fBlocks[vNewPos].endTokenNr := fStos[fStackSize - 1].nrTokena;
       fBlocks[vNewPos].structureId := v_nrStruktury;
 
       fStackSize := fStackSize - v_rozmiarStruktury;
@@ -283,14 +293,14 @@ begin
   else
   begin
     i := fFunctionIndex[currFunction];
-    while (i >= 0) and (ALine <= fBlocks[i].endPos) do
+    while (i >= 0) and (ALine <= fBlocks[i].endPos.Line) do
     begin
-      if (ALine >= fBlocks[i].startPos) and (ALine <= fBlocks[i].endPos) then
+      if (ALine >= fBlocks[i].startPos.Line) and (ALine <= fBlocks[i].endPos.Line) then
         matchedBlockId := i;
       dec(i);
     end;
-    pBegin := fBlocks[matchedBlockId].startPos;
-    pEnd := fBlocks[matchedBlockId].EndPos;
+    pBegin := fBlocks[matchedBlockId].startPos.Line;
+    pEnd := fBlocks[matchedBlockId].EndPos.Line;
     result := True;
   end;
 end;
@@ -319,17 +329,6 @@ begin
   end;
 end;
 
-function TPLSRefactor.isTOken(pString: string): Boolean;
-var
-  i: Integer;
-begin
-  result := False;
-  if (pos('BEGIN', pString) <> 0) or (pos('END', pString) <> 0) or (pos('IF', pString) <> 0) or (pos('LOOP', pString) <>
-    0) or (pos('ELSE', pString) <> 0) or (pos('ELSIF', pString) <> 0) or (pos('PROCEDURE', pString) <> 0) or (pos('FUNCTION',
-    pString) <> 0) or (pos('EXCEPTION', pString) <> 0) or (pos('DECLARE', pString) <> 0) or (pos('CASE', pString) <> 0)
-    then
-    result := True;
-end;
 
 function TPLSRefactor.FindMatichngBlocks(ALine: Integer): Integer;
 var
@@ -342,7 +341,7 @@ begin
   SetLength(fFoundResultBlocks, 0);
   for i := 0 to fFunctionIndexCount - 1 do
   begin
-    if (ALine >= fBlocks[fFunctionIndex[i]].startPos) and (ALine <= fBlocks[fFunctionIndex[i]].endPos) then
+    if (ALine >= fBlocks[fFunctionIndex[i]].startPos.Line) and (ALine <= fBlocks[fFunctionIndex[i]].endPos.Line) then
     begin
       j := Length(fFoundResultBlocks);
       SetLength(fFoundResultBlocks, j + 1);
@@ -358,8 +357,8 @@ var
 begin
   for i := 0 to fBlockCount - 1 do
   begin
-    pOut := pOut + IntToStr(i) + ': ' + IntToStr(fBlocks[i].structureId) + ' start:' + IntToStr(fBlocks[i].startPos) +
-      ' end:' + IntToStr(fBlocks[i].endPos) + #13#10;
+    pOut := pOut + IntToStr(i) + ': ' + IntToStr(fBlocks[i].structureId) + ' start:' + IntToStr(fBlocks[i].startPos.Line) +
+      ' end:' + IntToStr(fBlocks[i].endPos.Line) + #13#10;
   end;
 end;
 
@@ -370,7 +369,7 @@ begin
   for i := 0 to Length(fFoundResultBlocks) - 1 do
   begin
     pOut := pOut + IntToStr(i) + ': ' + IntToStr(fFoundResultBlocks[i].structureId) + ' start:' + IntToStr(fFoundResultBlocks
-      [i].startPos) + ' end:' + IntToStr(fFoundResultBlocks[i].endPos) + #13#10;
+      [i].startPos.Line) + ' end:' + IntToStr(fFoundResultBlocks[i].endPos.Line) + #13#10;
   end;
 end;
 

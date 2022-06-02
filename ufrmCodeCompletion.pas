@@ -256,7 +256,7 @@ type
   end;
 
 implementation
-uses ufrmMain, ufrmEditor, uTypesE, ShellAPI, uPLSQLRefactor, ClipBrd;
+uses ufrmMain, ufrmEditor, uTypesE, ShellAPI, uPLSQLRefactor, ClipBrd, SynEditKeyCmds;
 
 {$R *.DFM}
 
@@ -1997,28 +1997,30 @@ begin
   end;
 end;
 
+function FirstCharPos(ALine : String) : Integer;
+ var vvTmp, vvSize : Integer;
+begin
+ try
+     vvSize := Length(ALine);
+     vvTmp:=0;
+     //find first non white character
+     while (vvTmp < vvSize-1) and not (ALine[vvTmp] in TSynValidStringChars) do
+          Inc(vvTmp);
+     if vvTmp = vvSize then
+       result:=-1
+     else
+      result:=vvTmp;
+ except
+   raise CException.Create('FirstCharPos',0,application);
+ end;
+end;
+
 procedure TFrmCodeCompletion.FindCurrentBlock;
 var
  vFound : Boolean;
  vPrevBlock : TBlockPaint;
 
- function FirstCharPos(ALine : String) : Integer;
-   var vvTmp, vvSize : Integer;
- begin
-   try
-       vvSize := Length(ALine);
-       vvTmp:=0;
-       //find first non white character
-       while (vvTmp < vvSize-1) and not (ALine[vvTmp] in TSynValidStringChars) do
-            Inc(vvTmp);
-       if vvTmp = vvSize then
-         result:=-1
-       else
-        result:=vvTmp;
-   except
-     raise CException.Create('FirstCharPos',0,application);
-   end;
- end;
+
 
 begin
   try
@@ -2164,7 +2166,7 @@ end;
 procedure TFrmCodeCompletion.ExecuteQuery;
 var
  vIdx : Integer;
- p : PPoint;
+// p : PPoint;
  vTmp : Integer;
  vObjectType : String;
  vObjectName, s, vAdd : String;
@@ -2732,9 +2734,12 @@ var
   fPLSRefactor : TPLSRefactor;
   fHighlighter: TSynCustomHighlighter;
 
-  vTokenId, vLine, vLineTmp : Integer;
-  vPrevToken, s : String;
-  vTokenMatching : Boolean;
+  vTokenId, vFoundBlockIdx : Integer;
+  vPrevToken, s,s1, vNewBlockText, vGetToken : String;
+  vTokenMatching, vThisBlockIsCorrectVariableScope, vOldNameFound : Boolean;
+  i : Integer;
+  p : PPoint;
+  caretPos, vCoord : TBufferCoord;
 begin
   fPLSRefactor:=nil;  fHighlighter:=nil;  vPrevToken:='';
   fPLSRefactor:=TPLSRefactor.Create;
@@ -2745,7 +2750,7 @@ begin
     TSynSQLSyn(fHighlighter).SQLDialect := SQLOracle;
     fHighlighter.ResetRange;
     fHighlighter.SetLine(fEditor.Text, 1);
-    vLine:=1; vLineTmp:=0;
+
     while not fHighlighter.GetEol do
     begin
       while (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkSpace)) and (not fHighlighter.GetEol) do
@@ -2758,10 +2763,10 @@ begin
       if (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkPLSQL)) then
       begin
         if fPLSRefactor.CheckToken(s, vTokenId) then begin
-          vLine:=FastCharIndexToRow(fHighlighter.GetTokenPos, vLine, vLineTmp);
+          vCoord:=fEditor.CharIndexToRowCol(fHighlighter.GetTokenPos);
           if vPrevToken='END' then
-            fPLSRefactor.CloseDoubleEndToken(s,vTokenId, vLine);
-          fPLSRefactor.PutToken(vTokenId, vLine,s);
+            fPLSRefactor.CloseDoubleEndToken(s,vTokenId, vCoord);
+          fPLSRefactor.PutToken(vTokenId, vCoord,s, fHighlighter.GetTokenPos);
           try
             fPLSRefactor.NewStructure;
           except
@@ -2776,12 +2781,80 @@ begin
 
     fPLSRefactor.FindMatichngBlocks(ALine);
     fPLSRefactor.OutputResultBlocks(s);
-
- //TODO wsrod blokow znalezc deklaracje i zmienic token w pierwszym bloku  wktorym jest deklaracja a jesli nie ma w zadnym to w calym pliku
-
     Clipboard.AsText := s;
 
+    //parsuj kod i szukaj pasujacej deklarancji
+    vThisBlockIsCorrectVariableScope:=False;
+    for i := 0 to  Length(fPLSRefactor.fFoundResultBlocks)-1 do
+    begin
+      s:='';
+      vNewBlockText:='';
+      fHighlighter.ResetRange;
+      fHighlighter.SetLine(fEditor.Text, 1);
+      //przesun siê do pocz¹tku bloku
+      while not fHighlighter.GetEol and (fHighlighter.GetTokenPos < fPLSRefactor.fFoundResultBlocks[i].startTokenNr) do
+      begin
+        fHighlighter.Next;
+      end;
 
+      //przeszukaj blok na deklaracjê zmiennej
+      vOldNameFound:=False;
+      while not fHighlighter.GetEol and (fHighlighter.GetTokenPos < fPLSRefactor.fFoundResultBlocks[i].endTokenNr) do
+      begin
+          vGetToken:=fHighlighter.GetToken;
+          if (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkIdentifier)) and
+             (UpperCase(vGetToken) = UpperCase(pOldName)) then
+          begin
+            vGetToken := pNewName;
+            vOldNameFound:=True;
+          end
+          else if (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkDatatype)) and
+                  vOldNameFound then
+            vThisBlockIsCorrectVariableScope:=true;
+
+          if not vThisBlockIsCorrectVariableScope and
+            (upperCase(fHighlighter.GetToken)='BEGIN') then
+            break;
+
+          vNewBlockText:=vNewBlockText+vGetToken;
+          fHighlighter.Next;
+      end;
+
+      //podmien w oryginalnym tekscie
+      if vThisBlockIsCorrectVariableScope then
+      begin
+         caretPos := fEditor.CaretXY;
+         Clipboard.AsText := vNewBlockText;
+         New(p);
+         try
+           p.X:=fPLSRefactor.fFoundResultBlocks[i].startPos.Char;
+           p.Y:=fPLSRefactor.fFoundResultBlocks[i].startPos.Line;
+           fEditor.ExecuteCommand(ecGotoXY, 'A', p);
+
+           p.X:=fPLSRefactor.fFoundResultBlocks[i].endPos.Char;
+           p.Y:=fPLSRefactor.fFoundResultBlocks[i].endPos.Line;
+           fEditor.ExecuteCommand(ecSelGotoXY, 'A', p);
+
+           fEditor.ExecuteCommand(ecPaste, 'A', p);
+
+           p.X:=caretPos.Char;
+           p.Y:=caretPos.Line;
+           fEditor.ExecuteCommand(ecGotoXY, 'A', p);
+
+         finally
+           dispose(p);
+         end;
+         break;
+      end;
+    end;
+    if not vThisBlockIsCorrectVariableScope then
+    begin
+      ShowMessage('Couldn''t find proper variable scope for this operation.');
+
+      fPLSRefactor.OutputBlocks(s);
+      fPLSRefactor.OutputResultBlocks(s1);
+      Clipboard.AsText := s1+#13#10+'-------------------------------'+#13#10+s;
+    end;
   finally
     if Assigned(fPLSRefactor) then
       fPLSRefactor.Free;

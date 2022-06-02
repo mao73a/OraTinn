@@ -152,6 +152,7 @@ type
     SelectAllmenu: TMenuItem;
     Highlight1: TMenuItem;
     RefactorRename1: TMenuItem;
+    N15: TMenuItem;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure Tile1Click(Sender: TObject);
     procedure Cascade1Click(Sender: TObject);

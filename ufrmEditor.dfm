@@ -285,6 +285,9 @@ object frmEditor: TfrmEditor
     object mpopReadOnly1: TMenuItem
       Action = frmTinnMain.ToggleReadOnly
     end
+    object Reload1: TMenuItem
+      Action = actReload
+    end
     object mpopSplit: TMenuItem
       Caption = 'Split Window'
       Visible = False
@@ -293,16 +296,16 @@ object frmEditor: TfrmEditor
     object N13: TMenuItem
       Caption = '-'
     end
-    object Reload1: TMenuItem
-      Action = actReload
+    object RefactorRename1: TMenuItem
+      Caption = 'Refactor Rename'
+      OnClick = RefactorRename1Click
+    end
+    object N15: TMenuItem
+      Caption = '-'
     end
     object Highlight1: TMenuItem
       Caption = 'Highlight'
       OnClick = Highlight1Click
-    end
-    object RefactorRename1: TMenuItem
-      Caption = 'Refactor Rename'
-      OnClick = RefactorRename1Click
     end
   end
   object alEdit: TActionList
