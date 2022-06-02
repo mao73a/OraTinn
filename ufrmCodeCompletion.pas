@@ -2760,7 +2760,7 @@ begin
 
       s := fHighlighter.GetToken;
       s:=UpperCase(s);
-      if (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkPLSQL)) then
+//      if (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkPLSQL)) then
       begin
         if fPLSRefactor.CheckToken(s, vTokenId) then begin
           vCoord:=fEditor.CharIndexToRowCol(fHighlighter.GetTokenPos);
@@ -2777,6 +2777,9 @@ begin
 
       fHighlighter.Next;
     end;
+
+    s:=fPLSRefactor.RemoveUnrecognizedStructures;
+
     s:='';
 
     fPLSRefactor.FindMatichngBlocks(ALine);
@@ -2853,7 +2856,8 @@ begin
 
       fPLSRefactor.OutputBlocks(s);
       fPLSRefactor.OutputResultBlocks(s1);
-      Clipboard.AsText := s1+#13#10+'-------------------------------'+#13#10+s;
+      Clipboard.AsText := 'Stack size ='+IntToStr(fPLSRefactor.fStackSize)+#13#10+
+        s1+#13#10+'-------------------------------'+#13#10+s;
     end;
   finally
     if Assigned(fPLSRefactor) then

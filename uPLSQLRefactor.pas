@@ -3,7 +3,7 @@ unit uPLSQLRefactor;
 interface
 
 uses
-  sysutils, classes, SynEditTypes;
+  sysutils, classes, SynEditTypes, regularExpressions;
 
 type
   TStructure = record
@@ -45,6 +45,9 @@ type
     fFunctionIndex: array[0..1023] of Integer;
     fFunctionIndexCount: Integer;
     procedure BuildIndex;
+    function StackString(pStartIdx : Integer) : String;
+    function StartingTokenRulePattern(pToken : Integer) : String;
+    procedure RemoveFromStack(pStackIdx : Integer);
   protected
     procedure Assign(Source: TPersistent); override;
     procedure AssignTo(Dest: TPersistent); override;
@@ -66,13 +69,18 @@ type
     constructor Create;
     procedure OutputBlocks(var pOut: string);
     procedure OutputResultBlocks(var pOut: string);
+    function RemoveUnrecognizedStructures : String;
   end;
 
 const
   gLangStructures: TLangStructure = (
     tokens: ('PROCEDURE', 'FUNCTION', 'BEGIN', 'IF', 'LOOP', 'END', 'FOR', 'END IF', 'END LOOP', 'WHILE', 'CASE',
-      'DECLARE','CREATE');
-    structures: ((
+      'DECLARE','PACKAGE');
+    structures: (
+    (
+    name: 'package-end';
+    rule: (13, 0, 6)
+   ), (
     name: 'function';
     rule: (2, 3, 6)
   ), (
@@ -99,9 +107,6 @@ const
   ), (
     name: 'when-case';
     rule: (11, 0, 6)
-  ), (
-    name: 'create-end';
-    rule: (13, 0, 6)
   )
   )
   );
@@ -217,6 +222,116 @@ begin
   fFunctionIndexBuilt := False;
 end;
 
+{
+function TPLSRefactor.CanStructureBeMatched(pStackPos, pStructureNr : Integer
+procedure TPLSRefactor.RemoveUnrecognizedStructures;
+var
+ vLoopNumber, vStosIdx, v_nrStruktury, vToken, v_i : Integer;
+begin
+  vLoopNumber:=1;
+  while fStackSize>0 do
+  begin
+    for vStosIdx := 0 to fStackSize-1 do
+    begin
+      vToken := fStos[vStosIdx].token;
+      for v_nrStruktury := 1 to Length(gLangStructures.Structures) do
+      begin
+       for v_i := 1 to Length(gLangStructures.Structures[v_nrStruktury].rule) do
+       begin
+         if gLangStructures.Structures[v_nrStruktury].rule[v_i]=vToken then
+         begin
+
+         end;
+
+       end;
+
+      end;
+    end;
+
+
+    Inc(vLoopNumber);
+    if vLoopNumber >100 then exit;
+  end;
+end;
+}
+
+function TPLSRefactor.StackString(pStartIdx : Integer) : String;
+var
+ vI : Integer;
+begin
+  if (pStartIdx<0) or (pStartidx>fStackSize-1) then
+  begin
+    raise Exception.Create('blad w StackString; pStartIdx='+IntToStr(pStartIdx));
+  end;
+
+  result:='';
+  for vI := pStartIdx to fStackSize-1 do
+  begin
+    result:=result+','+IntToStr(fStos[vI].token)+',';
+  end;
+end;
+
+
+function TPLSRefactor.StartingTokenRulePattern(pToken : Integer) : String;
+var
+  vStrctIdx,  vI : Integer;
+begin
+   result:='';
+   for vStrctIdx := 1 to Length(gLangStructures.Structures) do
+   begin
+     if gLangStructures.Structures[vStrctIdx].rule[1]=pToken then
+     begin
+       for vI := 1 to Length(gLangStructures.Structures[vStrctIdx].rule) do
+       begin
+         if gLangStructures.Structures[vStrctIdx].rule[vI]<>0 then
+           result:=result+'.*,'+IntToStr(gLangStructures.Structures[vStrctIdx].rule[vI])+',.*';
+       end;
+     end;
+   end;
+end;
+
+procedure TPLSRefactor.RemoveFromStack(pStackIdx : Integer);
+var
+  vI : Integer;
+begin
+  if (pStackIdx>fStackSize-1) or (pStackIdx<0) then
+    exit;
+  for vI := pStackIdx+1 to fStackSize-1 do
+  begin
+    fStos[vI-1]:=fStos[vI];
+  end;
+  Dec(fStackSize);
+
+end;
+
+function TPLSRefactor.RemoveUnrecognizedStructures : String;
+var
+  vStackString, vStrctPattern : String;
+  vI, vToken, vTokenIdx : Integer;
+  vOrgStackSize : Integer;
+begin
+   vOrgStackSize:=fStackSize;
+   for vI := 0 to vOrgStackSize-1 do
+   begin
+     vTokenIdx:=vOrgStackSize-vI-1;
+     vToken:=fStos[vTokenIdx].token;
+     vStackString:=StackString(vTokenIdx);
+     vStrctPattern := StartingTokenRulePattern(vToken);
+     if vStrctPattern<>'' then
+     begin
+       if not TRegEx.IsMatch(vStackString, vStrctPattern) then
+       begin
+          RemoveFromStack(vTokenIdx);
+       end;
+     end;
+   end;
+   for vI := 1 to fStackSize do
+    try
+      NewStructure;
+    except
+    end;
+end;
+
 procedure TPLSRefactor.Clear;
 begin
   fFunctionIndexBuilt := False;
@@ -314,7 +429,7 @@ begin
     fFunctionIndexCount := 0;
     for i := 0 to fBlockCount - 1 do
     begin
-      if fBlocks[i].structureId in [1, 2, 3] then
+      if fBlocks[i].structureId in [1, 2, 3, 4] then
       begin
         vNew := fFunctionIndexCount;
         if fFunctionIndexCount < 1023 then
