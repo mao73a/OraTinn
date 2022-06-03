@@ -1,6 +1,6 @@
 CREATE OT REPLACE PACKAGE BODY orw_pck_test AS
-  g_execution_REC   ORTW_WYKONANIA_ZADAN%ROWTYPE;
-  g_execution_NUM4433   NUMBER;
+  g_execution_REC1   ORTW_WYKONANIA_ZADAN%ROWTYPE;
+  g_execution_NUM   NUMBER;
   
   PROCEDURE ver(p_info3 VARCHAR2 DEFAULT NULL);
   PROCEDURE ver(p_info3 VARCHAR2 DEFAULT NULL);
@@ -33,12 +33,13 @@ CREATE OT REPLACE PACKAGE BODY orw_pck_test AS
         v_zmienna_txt33   VARCHAR2(2000 CHAR);
         v_zmienna_dat   DATE;
     begin
+		    g_execution_REC1/34;
         v_zmienna_num:=1;
         v_zmienna_txt33:='alamakota';
         v_zmienna_dat:=sysdate;
         v_naglowek:=333;
-        g_execution_REC:=23432;
-        g_execution_NUM4433:=34534534;
+        g_execution_REC1:=23432;
+        g_execution_NUM:=34534534;
         dbms_output.put_line(v_zmienna_txt33);
         dbms_output.put_line(v_zmienna_num);
         dbms_output.put_line(v_zmienna_dat);

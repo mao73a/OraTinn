@@ -2735,7 +2735,7 @@ var
   fHighlighter: TSynCustomHighlighter;
 
   vTokenId, vFoundBlockIdx : Integer;
-  vPrevToken, s,s1, vNewBlockText, vGetToken : String;
+  vPrevToken, s,s1, vNewBlockText, vGetToken, vDeclarationStack : String;
   vTokenMatching, vThisBlockIsCorrectVariableScope, vOldNameFound : Boolean;
   i : Integer;
   p : PPoint;
@@ -2805,14 +2805,25 @@ begin
       while not fHighlighter.GetEol and (fHighlighter.GetTokenPos < fPLSRefactor.fFoundResultBlocks[i].endTokenNr) do
       begin
           vGetToken:=fHighlighter.GetToken;
+          if vGetToken=';' then
+            vDeclarationStack:=''
+          else
+            vDeclarationStack:=vDeclarationStack+','+IntToStr(fHighlighter.GetTokenKind);
+
           if (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkIdentifier)) and
              (UpperCase(vGetToken) = UpperCase(pOldName)) then
           begin
             vGetToken := pNewName;
             vOldNameFound:=True;
+            vDeclarationStack:='old_name';
           end
-          else if (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkDatatype)) and
+{          else if (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkDatatype)) and // vStaraZmienna NUMBER|DATE|VARCHAR2
                   vOldNameFound then
+            vThisBlockIsCorrectVariableScope:=true}
+          else if (vDeclarationStack = 'old_name,'+IntToStr(Ord(SynHighlighterSQL.tkSpace))+','+
+                   IntToStr(Ord(SynHighlighterSQL.tkIdentifier))) or               //vStaraZmienna TUserType
+                  (vDeclarationStack = 'old_name,'+IntToStr(Ord(SynHighlighterSQL.tkSpace))+','+
+                   IntToStr(Ord(SynHighlighterSQL.tkDatatype)))  then             // vStaraZmienna NUMBER|DATE|VARCHAR2
             vThisBlockIsCorrectVariableScope:=true;
 
           if not vThisBlockIsCorrectVariableScope and
@@ -2826,6 +2837,7 @@ begin
       //podmien w oryginalnym tekscie
       if vThisBlockIsCorrectVariableScope then
       begin
+         fEditor.BeginUpdate;
          caretPos := fEditor.CaretXY;
          Clipboard.AsText := vNewBlockText;
          New(p);
@@ -2845,6 +2857,7 @@ begin
            fEditor.ExecuteCommand(ecGotoXY, 'A', p);
 
          finally
+           fEditor.EndUpdate;
            dispose(p);
          end;
          break;
