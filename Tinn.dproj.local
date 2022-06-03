@@ -1,2 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<BorlandProject/>
+<BorlandProject>
+  <Transactions>
+    <Transaction>2022-06-03 16:00:58.401,=C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\Unit1.pas</Transaction>
+    <Transaction>2022-06-03 16:05:02.003,C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\ufrmRefactorVariableRename.pas=C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\Unit1.pas</Transaction>
+    <Transaction>2022-06-03 16:05:02.003,C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\ufrmRefactorVariableRename.dfm=C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\Unit1.dfm</Transaction>
+  </Transactions>
+</BorlandProject>

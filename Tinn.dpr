@@ -41,7 +41,8 @@ uses
   uQueryGrid in 'uQueryGrid.pas' {FrmQueryGrid},
   uFrmJumpProc in 'uFrmJumpProc.pas' {JumpProc},
   VDMUnit,
-  uPLSQLRefactor in 'uPLSQLRefactor.pas';
+  uPLSQLRefactor in 'uPLSQLRefactor.pas',
+  ufrmRefactorVariableRename in 'ufrmRefactorVariableRename.pas' {FormVariableRefactoringChoice};
 
 {$R *.RES}
 
@@ -192,6 +193,7 @@ begin
   Application.Initialize;
   Application.Title := 'Tinn';
   Application.CreateForm(TdmSyn, dmSyn);
+
   if (ParamCount > 0) then
   begin
   	FillFileList(FileList);

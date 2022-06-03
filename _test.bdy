@@ -1,4 +1,10 @@
-CREATE OT REPLACE PACKAGE BODY orw_pck_test AS
+CREATE OT REPLACE PACKAGE BODY orw_pck_test
+AS
+            SELECT DYSP_ID, ROWID INTO v_dysp_pop_id, v_ROWID
+            from ORT_DATY_NALICZEN
+            WHERE PORTFEL_ID=v_wycena_REC.portfel_id and
+                  DATA=v_wycena_REC.data_wyc
+            FOR UPDATE;
   g_execution_REC1   ORTW_WYKONANIA_ZADAN%ROWTYPE;
   g_execution_NUM   NUMBER;
   
@@ -15,6 +21,7 @@ CREATE OT REPLACE PACKAGE BODY orw_pck_test AS
   v_uzytkownik VARCHAR(120)  := '$Author:: OCHAL                                                                                                     $';
   v_naglowek VARCHAR(120)    := '$Header:: /wcam/owa/common/ddl/cww_pck_task.bdy 13 Out 1.0.13 25.04.22 16:00 OCHAL                                  $';
   BEGIN
+  
     IF p_info3 IS NULL THEN
       RETURN REPLACE(v_wersja || CHR(10) || v_nazwa_pliku || CHR(10) || v_modyfikacja || CHR(10) || v_uzytkownik || CHR(10) || v_naglowek, '  ', '');
     ELSIF 'revision' LIKE LOWER(p_info3) || '%' THEN

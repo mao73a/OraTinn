@@ -69,7 +69,10 @@ type
     constructor Create;
     procedure OutputBlocks(var pOut: string);
     procedure OutputResultBlocks(var pOut: string);
+    procedure RemoveLastTokenFromStack;
     function RemoveUnrecognizedStructures : String;
+    procedure OutputResultBlocksStrings(pOut: TStrings);
+    procedure   OutputStack(var pOut: string);
   end;
 
 const
@@ -78,7 +81,7 @@ const
       'DECLARE','PACKAGE');
     structures: (
     (
-    name: 'package-end';
+    name: 'package';
     rule: (13, 0, 6)
    ), (
     name: 'function';
@@ -130,6 +133,12 @@ begin
       end
     end;
   end;
+end;
+
+procedure TPLSRefactor.RemoveLastTokenFromStack;
+begin
+ if fStackSize > 0 then
+   Dec(fStackSize);
 end;
 
 function TPLSRefactor.CheckToken(p_token: string; var p_tokenId: Integer): Boolean;
@@ -472,7 +481,7 @@ var
 begin
   for i := 0 to fBlockCount - 1 do
   begin
-    pOut := pOut + IntToStr(i) + ': ' + IntToStr(fBlocks[i].structureId) + ' start:' + IntToStr(fBlocks[i].startPos.Line) +
+    pOut := pOut + IntToStr(i) + ': struct=' + IntToStr(fBlocks[i].structureId) + ' start:' + IntToStr(fBlocks[i].startPos.Line) +
       ' end:' + IntToStr(fBlocks[i].endPos.Line) + #13#10;
   end;
 end;
@@ -483,8 +492,31 @@ var
 begin
   for i := 0 to Length(fFoundResultBlocks) - 1 do
   begin
-    pOut := pOut + IntToStr(i) + ': ' + IntToStr(fFoundResultBlocks[i].structureId) + ' start:' + IntToStr(fFoundResultBlocks
+    pOut := pOut + IntToStr(i) + ': struct=' + IntToStr(fFoundResultBlocks[i].structureId) + ' start:' + IntToStr(fFoundResultBlocks
       [i].startPos.Line) + ' end:' + IntToStr(fFoundResultBlocks[i].endPos.Line) + #13#10;
+  end;
+end;
+
+procedure TPLSRefactor.OutputResultBlocksStrings(pOut: TStrings);
+var
+  i: Integer;
+begin
+  pOut.Clear;
+  for i := 0 to Length(fFoundResultBlocks) - 1 do
+  begin
+    pOut.Add(  gLangStructures.Structures[fFoundResultBlocks[i].structureId].name );
+  end;
+end;
+
+procedure   TPLSRefactor.OutputStack(var pOut: string);
+var
+ i : Integer;
+begin
+  pOut := 'Stack (size='+IntToStr(fStackSize)+')'#13#10;
+  for i:=0 to fStackSize-1 do
+  begin
+    pOut := pOut + IntToStr(i) + ': token=' + IntToStr(fStos[i].token) + ' start:' + IntToStr(fStos
+      [i].tokenPos.Line) + ' txt:' + fStos[i].tekst + #13#10;
   end;
 end;
 

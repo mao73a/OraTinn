@@ -256,7 +256,7 @@ type
   end;
 
 implementation
-uses ufrmMain, ufrmEditor, uTypesE, ShellAPI, uPLSQLRefactor, ClipBrd, SynEditKeyCmds;
+uses ufrmMain, ufrmEditor, uTypesE, ShellAPI, uPLSQLRefactor, ClipBrd, SynEditKeyCmds, ufrmRefactorVariableRename;
 
 {$R *.DFM}
 
@@ -2735,11 +2735,12 @@ var
   fHighlighter: TSynCustomHighlighter;
 
   vTokenId, vFoundBlockIdx : Integer;
-  vPrevToken, s,s1, vNewBlockText, vGetToken, vDeclarationStack : String;
-  vTokenMatching, vThisBlockIsCorrectVariableScope, vOldNameFound : Boolean;
-  i : Integer;
+  vPrevToken, s,s1,s2, vNewBlockText, vGetToken : String;
+  vOldNameFound : Boolean;
+  i , vChoosenBlock: Integer;
   p : PPoint;
   caretPos, vCoord : TBufferCoord;
+  vForm : TFormVariableRefactoringChoice;
 begin
   fPLSRefactor:=nil;  fHighlighter:=nil;  vPrevToken:='';
   fPLSRefactor:=TPLSRefactor.Create;
@@ -2766,7 +2767,12 @@ begin
           vCoord:=fEditor.CharIndexToRowCol(fHighlighter.GetTokenPos);
           if vPrevToken='END' then
             fPLSRefactor.CloseDoubleEndToken(s,vTokenId, vCoord);
-          fPLSRefactor.PutToken(vTokenId, vCoord,s, fHighlighter.GetTokenPos);
+
+          if (s='UPDATE') and (vPrevToken='FOR') then
+            fPLSRefactor.RemoveLastTokenFromStack
+          else
+            fPLSRefactor.PutToken(vTokenId, vCoord,s, fHighlighter.GetTokenPos);
+
           try
             fPLSRefactor.NewStructure;
           except
@@ -2779,75 +2785,77 @@ begin
     end;
 
     s:=fPLSRefactor.RemoveUnrecognizedStructures;
-
-    s:='';
-
     fPLSRefactor.FindMatichngBlocks(ALine);
-    fPLSRefactor.OutputResultBlocks(s);
-    Clipboard.AsText := s;
+
+{    fPLSRefactor.OutputBlocks(s);
+    fPLSRefactor.OutputResultBlocks(s1);
+    fPLSRefactor.OutputStack(s2);
+    Clipboard.AsText := 'Stack size ='+IntToStr(fPLSRefactor.fStackSize)+#13#10+
+      s1+#13#10+'-------------------------------'+#13#10+s+
+      #13#10+s2;
+    ShowMessage(IntToStr(Length(fPLSRefactor.fFoundResultBlocks)));
+ }
+
+    if Length(fPLSRefactor.fFoundResultBlocks)=1 then
+       vChoosenBlock:=0
+    else if Length(fPLSRefactor.fFoundResultBlocks)=0 then
+    begin
+      ShowMessage('Can''t do that');
+      exit;
+    end
+    else
+    begin
+      try
+        vForm := TFormVariableRefactoringChoice.Create(Self);
+        fPLSRefactor.OutputResultBlocksStrings(vForm.getGroupOptions);
+        vForm.SetOption(0);
+        if vForm.ShowModal=mrCancel then
+          exit;
+
+        vChoosenBlock:=vForm.GetResult;
+      finally
+        vForm.Free;
+      end;
+    end;
 
     //parsuj kod i szukaj pasujacej deklarancji
-    vThisBlockIsCorrectVariableScope:=False;
-    for i := 0 to  Length(fPLSRefactor.fFoundResultBlocks)-1 do
     begin
-      s:='';
       vNewBlockText:='';
       fHighlighter.ResetRange;
       fHighlighter.SetLine(fEditor.Text, 1);
+
       //przesun siê do pocz¹tku bloku
-      while not fHighlighter.GetEol and (fHighlighter.GetTokenPos < fPLSRefactor.fFoundResultBlocks[i].startTokenNr) do
+      while not fHighlighter.GetEol and (fHighlighter.GetTokenPos < fPLSRefactor.fFoundResultBlocks[vChoosenBlock].startTokenNr) do
       begin
         fHighlighter.Next;
       end;
 
-      //przeszukaj blok na deklaracjê zmiennej
-      vOldNameFound:=False;
-      while not fHighlighter.GetEol and (fHighlighter.GetTokenPos < fPLSRefactor.fFoundResultBlocks[i].endTokenNr) do
+      //podmien zmienn¹ w bloku
+      while not fHighlighter.GetEol and (fHighlighter.GetTokenPos < fPLSRefactor.fFoundResultBlocks[vChoosenBlock].endTokenNr) do
       begin
           vGetToken:=fHighlighter.GetToken;
-          if vGetToken=';' then
-            vDeclarationStack:=''
-          else
-            vDeclarationStack:=vDeclarationStack+','+IntToStr(fHighlighter.GetTokenKind);
 
-          if (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkIdentifier)) and
+          if {(fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkIdentifier)) and}
              (UpperCase(vGetToken) = UpperCase(pOldName)) then
-          begin
             vGetToken := pNewName;
-            vOldNameFound:=True;
-            vDeclarationStack:='old_name';
-          end
-{          else if (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkDatatype)) and // vStaraZmienna NUMBER|DATE|VARCHAR2
-                  vOldNameFound then
-            vThisBlockIsCorrectVariableScope:=true}
-          else if (vDeclarationStack = 'old_name,'+IntToStr(Ord(SynHighlighterSQL.tkSpace))+','+
-                   IntToStr(Ord(SynHighlighterSQL.tkIdentifier))) or               //vStaraZmienna TUserType
-                  (vDeclarationStack = 'old_name,'+IntToStr(Ord(SynHighlighterSQL.tkSpace))+','+
-                   IntToStr(Ord(SynHighlighterSQL.tkDatatype)))  then             // vStaraZmienna NUMBER|DATE|VARCHAR2
-            vThisBlockIsCorrectVariableScope:=true;
-
-          if not vThisBlockIsCorrectVariableScope and
-            (upperCase(fHighlighter.GetToken)='BEGIN') then
-            break;
 
           vNewBlockText:=vNewBlockText+vGetToken;
           fHighlighter.Next;
       end;
 
       //podmien w oryginalnym tekscie
-      if vThisBlockIsCorrectVariableScope then
       begin
          fEditor.BeginUpdate;
          caretPos := fEditor.CaretXY;
          Clipboard.AsText := vNewBlockText;
          New(p);
          try
-           p.X:=fPLSRefactor.fFoundResultBlocks[i].startPos.Char;
-           p.Y:=fPLSRefactor.fFoundResultBlocks[i].startPos.Line;
+           p.X:=fPLSRefactor.fFoundResultBlocks[vChoosenBlock].startPos.Char;
+           p.Y:=fPLSRefactor.fFoundResultBlocks[vChoosenBlock].startPos.Line;
            fEditor.ExecuteCommand(ecGotoXY, 'A', p);
 
-           p.X:=fPLSRefactor.fFoundResultBlocks[i].endPos.Char;
-           p.Y:=fPLSRefactor.fFoundResultBlocks[i].endPos.Line;
+           p.X:=fPLSRefactor.fFoundResultBlocks[vChoosenBlock].endPos.Char;
+           p.Y:=fPLSRefactor.fFoundResultBlocks[vChoosenBlock].endPos.Line;
            fEditor.ExecuteCommand(ecSelGotoXY, 'A', p);
 
            fEditor.ExecuteCommand(ecPaste, 'A', p);
@@ -2860,17 +2868,7 @@ begin
            fEditor.EndUpdate;
            dispose(p);
          end;
-         break;
       end;
-    end;
-    if not vThisBlockIsCorrectVariableScope then
-    begin
-      ShowMessage('Couldn''t find proper variable scope for this operation.');
-
-      fPLSRefactor.OutputBlocks(s);
-      fPLSRefactor.OutputResultBlocks(s1);
-      Clipboard.AsText := 'Stack size ='+IntToStr(fPLSRefactor.fStackSize)+#13#10+
-        s1+#13#10+'-------------------------------'+#13#10+s;
     end;
   finally
     if Assigned(fPLSRefactor) then
