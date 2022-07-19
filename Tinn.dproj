@@ -24,7 +24,6 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
-			<UsePackages>true</UsePackages>
 			<ImageDebugInfo>true</ImageDebugInfo>
 			<DCC_SymbolReferenceInfo>1</DCC_SymbolReferenceInfo>
 			<DCC_K>false</DCC_K>

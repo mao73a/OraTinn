@@ -1,9 +1,10 @@
 object FormVariableRefactoringChoice: TFormVariableRefactoringChoice
   Left = 0
   Top = 0
+  BorderStyle = bsSingle
   Caption = 'Refactoring variable rename'
-  ClientHeight = 173
-  ClientWidth = 284
+  ClientHeight = 183
+  ClientWidth = 294
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -33,6 +34,7 @@ object FormVariableRefactoringChoice: TFormVariableRefactoringChoice
     Width = 75
     Height = 25
     Caption = 'OK'
+    Default = True
     ModalResult = 1
     TabOrder = 1
   end

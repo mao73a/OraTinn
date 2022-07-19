@@ -1489,6 +1489,8 @@ begin
 {*}try
     if Assigned(fspStatus) then begin
       fspStatus.Text:='Compiling...';
+      Refresh;
+      Application.ProcessMessages;
     end;
     if aWarnings.Checked then begin
       dsCompile.Active:=False;
@@ -1515,7 +1517,7 @@ begin
         vObjectType:='PACKAGE';
         if not PackageNameMatch(TScanKeywordThread(fWorkerThread).SQLObjectName,UpperCase(dsCompile.Session.LogonUsername))  then
         begin
-          if IDNO=Application.MessageBox(PChar('Package name doesn''t match schema pattern. Continue anyway?'),'Query',MB_ICONQUESTION+MB_YESNO) then
+          if IDNO=Application.MessageBox(PChar('Package name doesn''t match schema pattern. Continue anyway?'),'Query',MB_ICONQUESTION+MB_YESNO+MB_DEFBUTTON2) then
             exit;
         end;
 
@@ -1597,6 +1599,8 @@ begin
         if Assigned(fCompileErrors) then fCompileErrors.Close;
         if Assigned(fspStatus) then
           fspStatus.Text:='Compiled!';
+          Refresh;
+          Application.ProcessMessages;
       end;
     end;
     if Assigned(dsCompile) then
@@ -2735,7 +2739,7 @@ var
   fHighlighter: TSynCustomHighlighter;
 
   vTokenId, vFoundBlockIdx : Integer;
-  vPrevToken, s,s1,s2, vNewBlockText, vGetToken : String;
+  vPrevToken, vPrev2Token, s,s1,s2, vNewBlockText, vGetToken : String;
   vOldNameFound : Boolean;
   i , vChoosenBlock: Integer;
   p : PPoint;
@@ -2763,14 +2767,15 @@ begin
       s:=UpperCase(s);
 //      if (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkPLSQL)) then
       begin
-        if fPLSRefactor.CheckToken(s, vTokenId) then begin
+        if (s='UPDATE') and (vPrevToken='FOR') then
+          fPLSRefactor.RemoveLastTokenFromStack;
+
+        if (s='FOR') and (vPrev2Token='OPEN') then //pomin
+        else if vPrevToken='$' then //dyrektywy
+        else if fPLSRefactor.CheckToken(s, vTokenId) then begin
           vCoord:=fEditor.CharIndexToRowCol(fHighlighter.GetTokenPos);
           if vPrevToken='END' then
             fPLSRefactor.CloseDoubleEndToken(s,vTokenId, vCoord);
-
-          if (s='UPDATE') and (vPrevToken='FOR') then
-            fPLSRefactor.RemoveLastTokenFromStack
-          else
             fPLSRefactor.PutToken(vTokenId, vCoord,s, fHighlighter.GetTokenPos);
 
           try
@@ -2779,6 +2784,7 @@ begin
           end;
         end;
       end;
+      vPrev2Token:=vPrevToken;
       vPrevToken:=s;
 
       fHighlighter.Next;

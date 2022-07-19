@@ -475,7 +475,7 @@ implementation
 
 uses
  ShellAPI, ufrmEditor, uDMSyn, ufrmPrintPreview, ufrmSynColor,
-  udlgAppOptions, AsciiChart, udlgSearchInFiles, uActionMacro, uFrmConnect, uFrmJumpProc;
+  udlgAppOptions, AsciiChart, udlgSearchInFiles, uActionMacro, uFrmConnect, uFrmJumpProc, math;
 
 {$R *.DFM}
 
@@ -924,12 +924,22 @@ Begin
   End;
 End;
 
+procedure CorrectFormPosition(fForm: TForm);
+begin
+  fForm.Left := MIN(MAX(-7,fForm.left-Screen.DesktopLeft),Screen.DesktopWidth-fForm.Width+7)+Screen.DesktopLeft;
+  fForm.top := MIN(MAX(0,fForm.top),Screen.DesktopHeight-fForm.Height);
+  fForm.Width := MIN(fForm.Width,Screen.DesktopWidth);
+  fForm.Height := MIN(fForm.Height,Screen.DesktopHeight);
+end;
+
 Procedure TfrmTinnMain.ShowApplication;
 Begin
 	If IsIconic(Application.Handle) then
   	Application.Restore
   else
     Application.BringToFront;
+
+
 End;
 
 procedure TfrmTinnMain.LoadFile(iFileName : string; CreateNewChild : boolean = true);
@@ -1393,6 +1403,7 @@ begin
   iniFile.ReadSectionValues('ProjectMRU', ProjectMRUList);
   BuildProjectMRU(miProjectReopen1);
 
+  CorrectFormPosition(Self);
 end;
 
 procedure TfrmTinnMain.SetDefaultEditorOptions;
