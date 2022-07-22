@@ -36,6 +36,18 @@ var
 
 type
 
+  TMyPageControl = class(TPageControl)//class helper for TPageControl
+    private
+      procedure SetActivePage(const Value: TTabSheet);
+      function  GetActivePage : TTabSheet;
+      procedure SetActivePageIndex(const Value: Integer);
+      function  GetActivePageIndex : Integer;
+    public
+      property ActivePage : TTabSheet read GetActivePage write SetActivePage;
+      property ActivePageIndex : Integer read GetActivePageIndex write SetActivePageIndex;
+
+  end;
+
 
   TfrmTinnMain = class(TForm)
     alStandard: TActionList;
@@ -359,7 +371,8 @@ type
     procedure aMoveBlockDownExecute(Sender: TObject);
     procedure Copyinipath1Click(Sender: TObject);
     procedure pgConnectionsChange(Sender: TObject);
-
+    procedure WindowHideAll(pHide : Boolean);
+    procedure AdvToolButton1Click(Sender: TObject);
   private
     { Private declarations }
 
@@ -509,6 +522,7 @@ begin
     	ShowHint := True;
   		pgFiles.ActivePageIndex := pgFiles.PageCount -1;
     	pgFiles.ActivePage.Tag := -1;
+      frmExplorer.RegisterFileForActiveConnection(Caption, pgFiles.ActivePage);
  	 	end;
    	FileSaveCmd.Enabled := true;
  	end;
@@ -608,10 +622,15 @@ begin
     for j := 0 to pgFiles.PageCount -1 do
     begin
       if (pgFiles.Pages[j].Hint = tmpstr) then
+      begin
         pgFiles.ActivePageIndex := j;
+        frmExplorer.RegisterFileForActiveConnection(tmpstr, pgFiles.ActivePage);
+      end;
     end;
     pgFiles.Hint := tmpstr;
-    pgFiles.ActivePage.Tag := -1;
+    if (pgFiles.ActivePage<>nil) then
+      pgFiles.ActivePage.Tag := -1;
+
 
     //!! Check contents of new file
     lnewFile := TStringList.Create;
@@ -640,17 +659,25 @@ begin
     // If an Untitled is on top
     i := FindTopWindow;
     boolFileExists := false;
-    if (pgFiles.PageCount > 0) then
-      boolFileExists := FileExists(pgFiles.ActivePage.Hint);
-    if Not(boolFileExists) and (ExecRegExpr('Untitled[1-9]+$', pgFiles.ActivePage.Caption))  then
+    if Assigned(pgFiles.ActivePage) then
     begin
-      if ((Self.MDIChildren[i] as TfrmEditor).synEditor.Modified = False) then // Check for modification
-        LoadFile(tmpstr, false) // Load the file into that
-      else
-        LoadFile(tmpstr, true);
+      if pgFiles.PageCount > 0 then
+        boolFileExists := FileExists(pgFiles.ActivePage.Hint);
+      if Not(boolFileExists) and (ExecRegExpr('Untitled[1-9]+$', pgFiles.ActivePage.Caption))  then
+      begin
+        if ((Self.MDIChildren[i] as TfrmEditor).synEditor.Modified = False) then // Check for modification
+          LoadFile(tmpstr, false) // Load the file into that
+        else
+          LoadFile(tmpstr, true);
+      end
+      else // else just load the file
+        LoadFile(tmpstr, NOT lOverwriteCurrentContents); //!! boolean added
     end
-    else // else just load the file
-      LoadFile(tmpstr, NOT lOverwriteCurrentContents); //!! boolean added
+    else
+    begin
+       // else just load the file
+       LoadFile(tmpstr, NOT lOverwriteCurrentContents); //!! boolean added
+    end;
   end;
 
 
@@ -669,62 +696,6 @@ begin
   (Self.MDIChildren[FindTopWindow] as TfrmEditor).CheckSaveStatus;
 
 end;
-{var
- 	tmpstr : string;
- 	i, j : integer;
-  LineNumber : TPoint;
-  boolFileExists : boolean;
-begin
-  // Check to see if the file is already opened
-  tmpstr := iFile;
-  i := FindWindowByName(tmpstr);
-  if i > -1 then // if the file is already open, bring it to the front
-  begin
-    Self.MDIChildren[i].BringToFront;
-    (Self.MDIChildren[i] as TfrmEditor).SetHighlighterFromFileExt(ExtractFileExt(tmpstr));
-    UpdateMRU(miRecentFile1, tmpstr);
-    UpdateMRU((Self.MDIChildren[i] as TfrmEditor).miRecentFiles, tmpstr);
-    for j := 0 to pgFiles.PageCount -1 do
-    begin
-    if (pgFiles.Pages[j].Hint = tmpstr) then
-      pgFiles.ActivePageIndex := j;
-    end;
-    pgFiles.Hint := tmpstr;
-    pgFiles.ActivePage.Tag := -1;
-
-  end
-  else
-  begin
-    // If an Untitled is on top
-    i := FindTopWindow;
-    boolFileExists := false;
-    if (pgFiles.PageCount > 0) then
-      boolFileExists := FileExists(pgFiles.ActivePage.Hint);
-    if Not(boolFileExists) and (ExecRegExpr('Untitled[1-9]+$', pgFiles.ActivePage.Caption))  then
-    begin
-      if ((Self.MDIChildren[i] as TfrmEditor).synEditor.Modified = False) then // Check for modification
-        LoadFile(tmpstr, false) // Load the file into that
-      else
-        LoadFile(tmpstr, true);
-    end
-    else // else just load the file
-      LoadFile(tmpstr, true);
-  end;
-
-
-  if (iLineNumberJump > 0) then
-  begin
-    LineNumber.y := iLineNumberJump;
-    LineNumber.x := 1;
-    i := FindTopWindow;
-    (Self.MDIChildren[i] as TfrmEditor).synEditor.ExecuteCommand(17, 'A', @LineNumber);
-  end;
-
-  SynMR.Editor := (Self.MDIChildren[FindTopWindow] as TfrmEditor).synEditor;
-
-  (Self.MDIChildren[FindTopWindow] as TfrmEditor).CheckSaveStatus;
-
-end; }
 
 procedure TfrmTinnMain.FileExitCmdExecute(Sender: TObject);
 begin
@@ -749,6 +720,16 @@ begin
   begin
     Self.MDIChildren[i].WindowState := wsMinimized;
   end;
+end;
+
+procedure TfrmTinnMain.WindowHideAll(pHide : Boolean);
+begin
+{  EditorPanel.Visible:=pHide;
+  if pHide then
+    EditorPanel.BringToFront
+  else
+    EditorPanel.SendToBack;
+}
 end;
 
 procedure TfrmTinnMain.WindowTileVertical1Execute(Sender: TObject);
@@ -942,8 +923,6 @@ Begin
   	Application.Restore
   else
     Application.BringToFront;
-
-
 End;
 
 procedure TfrmTinnMain.LoadFile(iFileName : string; CreateNewChild : boolean = true);
@@ -951,15 +930,19 @@ var
  Attributes : word;
  i : integer;
  tmpStr : string;
+ vTabSheet : TTabSheet;
 begin
   if CreateNewChild then
   begin
-    TfrmEditor.Create(Self);
-    with TTabSheet.Create(Self) do
+    WindowHideAll(False);
+    vTabSheet:= TTabSheet.Create(Self);
+    with vTabSheet do
     begin
       PageControl := pgFiles;
-      pgFiles.ActivePageIndex := pgFiles.PageCount -1;
+      pgFiles.ActivePage := vTabSheet;
+      frmExplorer.RegisterFileForActiveConnection(iFileName, vTabSheet);
     end;
+    TfrmEditor.Create(Self);
   end;
   with (Self.MDIChildren[FindTopWindow] as TfrmEditor) do
   begin
@@ -994,18 +977,20 @@ begin
    tmpStr := StringReplace(iFileName,'&','&&', [rfReplaceAll]);
 
    pgFiles.Hint := tmpStr;
-   pgFiles.ActivePage.Hint := tmpStr;
+   vTabSheet.Hint := tmpStr;
 
    if (miToggleReadOnly.Checked) then
-   	pgFiles.ActivePage.Caption := '<' + StripPath(pgFiles.ActivePage.Hint) + '>'
+   	vTabSheet.Caption := '<' + StripPath(vTabSheet.Hint) + '>'
    else
-   	pgFiles.ActivePage.Caption := StripPath(iFileName);
-   pgFiles.ActivePage.Tag := -1;
+   	vTabSheet.Caption := StripPath(iFileName);
+   vTabSheet.Tag := -1;
 
   UpdateMRU(miRecentFile1, iFileName);
   i := FindTopWindow;
   if i > -1 then
     UpdateMRU((Self.MDIChildren[i] as TfrmEditor).miRecentFiles, iFileName);
+
+  pgFiles.ActivePage := vTabSheet;
 end;
 
 procedure TfrmTinnMain.SetFileSizeinStatusBar(iFileName : string);
@@ -1882,19 +1867,6 @@ var
  tmpstr,vGlobalSearch : string;
  i : integer;
 begin
-	// Bring the proper window up top
-	{tmpstr := pgFiles.ActivePage.Hint;
- 	i := FindWindowByName(tmpstr);
- 	if i > -1 then
- 	begin
-  	if Self.MDIChildren[i].WindowState = wsMinimized then
-    	Self.MDIChildren[i].WindowState := wsNormal
-   	else
-     	Self.MDIChildren[i].BringToFront;
-  end;
-  pgFiles.Hint := tmpstr;
-  SynMR.Editor := (Self.MDIChildren[FindTopWindow] as TfrmEditor).synEditor; }
-  // Code tweaked from Marco
 
   if Assigned(frmExplorer) then
     frmExplorer.Editor := nil;
@@ -2002,6 +1974,12 @@ begin
  		i := FindTopWindow;
  		(Self.MDIChildren[i] as tfrmEditor).DuplicateLineExecute(Sender);
   end;
+end;
+
+procedure TfrmTinnMain.AdvToolButton1Click(Sender: TObject);
+begin
+   	pgFiles.ActivePage.Caption := 'aaaaaaaa';
+    pgFiles.ActivePage.hint := 'qqqqq';
 end;
 
 procedure TfrmTinnMain.actTsButtonsExecute(Sender: TObject);
@@ -2414,7 +2392,10 @@ begin
   while (j <= pgFiles.PageCount -1) do
   begin
     if (pgFiles.Pages[j].Hint = iTabCaption) then
+    begin
+      frmExplorer.UnregisterFileFromActiveConnection(iTabCaption, pgFiles.Pages[j]);
       pgFiles.Pages[j].Free;
+    end;
     inc(j);
   end;
   for i := Self.MDIChildCount - 1 downto 0 do
@@ -3390,6 +3371,7 @@ end;
 procedure TfrmTinnMain.pgConnectionsChange(Sender: TObject);
 var
   tmpstr : String;
+  vI: Integer;
 begin
   if Assigned(pgConnections.ActivePage) then
   begin
@@ -3610,6 +3592,28 @@ begin
   end;
 end;
 
+
+{ TMyPageControl }
+
+function TMyPageControl.GetActivePage: TTabSheet;
+begin
+  result:=inherited ActivePage;
+end;
+
+function TMyPageControl.GetActivePageIndex: Integer;
+begin
+  result:=inherited ActivePageIndex;
+end;
+
+procedure TMyPageControl.SetActivePage(const Value: TTabSheet);
+begin
+  inherited ActivePage := Value;
+end;
+
+procedure TMyPageControl.SetActivePageIndex(const Value: Integer);
+begin
+  inherited ActivePageIndex := Value;
+end;
 
 Initialization
   WM_FINDINSTANCE := RegisterWindowMessage('Editor: find previous instance');

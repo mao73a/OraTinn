@@ -47,14 +47,16 @@ type
   TMyOracleSession = class(TOracleSession)
     private
       connectString : String;
-      editorsList : TStringList;
+      fileTabList : TStringList;
       FConnectionTab: TTabSheet;
       procedure SetConnectionTab(const Value: TTabSheet);
-
     public
       constructor Create(AOwner: TComponent; pConnectString : String);overload;
       destructor  Destroy;override;
       property  ConnectionTab : TTabSheet read FConnectionTab write SetConnectionTab;
+      procedure RegisterFileTab(pFileName : String; pFileTab: TTabSheet);
+      procedure UnregisterFileTab(pFileName : String; pFileTab: TTabSheet);
+      procedure ShowActiveFileTabs;
   end;
 
   TFrmCodeCompletion = class(TForm)
@@ -178,6 +180,8 @@ type
     procedure ExecuteToHTML;
     procedure GetFunctionList(pFunctionList: TStrings);
     procedure SetActiveConnection(pConnectString : String);
+    procedure RegisterFileForActiveConnection(pFileName : String; pFileTab : TTabSheet);
+    procedure UnregisterFileFromActiveConnection(pFileName: String; pFileTab: TTabSheet);
 
   published
     property Editor : TCustomSynEdit read FEditor write SetEditor;
@@ -871,6 +875,7 @@ constructor TFrmCodeCompletion.Create(AOwner : TComponent; ACb: TControlBar; aCo
 begin
 {*}try
     inherited Create(AOwner);
+    fActiveConnection:='';
     fTimerExecution:=False;
     fControlBar := ACb;
     fConnections := TStringList.Create;
@@ -1430,6 +1435,7 @@ begin
 end;
 
 
+
 procedure TFrmCodeCompletion.SetActiveConnection(pConnectString : String);
 var
  vPos: Integer;
@@ -1448,12 +1454,14 @@ begin
       dsCompile.Session:=vMOS;
       vMOS.ConnectionTab.PageControl.ActivePage := vMOS.ConnectionTab;
       vMOS.ConnectionTab.PageControl.Visible := vMOS.ConnectionTab.PageControl.PageCount>1;
+      vMOS.ShowActiveFileTabs;
       tsDB.TabVisible:=True;
       tsDB.Caption:=pConnectString;
       LoadObjectsList;
       fObjectsLoaded:=True;
     end
     else begin
+      fActiveConnection:='';
       tsFile.ActivePageIndex:=0;
       fDbObjects.Clear;
       tsDB.TabVisible:=False;
@@ -1825,6 +1833,38 @@ begin
 {*}except
 {*}  raise CException.Create('Refresh1Click',0,self);
 {*}end;
+end;
+
+procedure TFrmCodeCompletion.RegisterFileForActiveConnection(pFileName: String; pFileTab: TTabSheet);
+var
+ vIdx: Integer;
+ vMOS : TMyOracleSession;
+begin
+   if fActiveConnection<>'' then
+   begin
+     vIdx:=fConnections.IndexOf(fActiveConnection);
+     if vIdx>=0 then
+     begin
+       vMOS:=TMyOracleSession(fConnections.Objects[vIdx]);
+       vMOS.RegisterFileTab(pFileName, pFileTab);
+     end;
+   end;
+end;
+
+procedure TFrmCodeCompletion.UnregisterFileFromActiveConnection(pFileName: String; pFileTab: TTabSheet);
+var
+ vIdx: Integer;
+ vMOS : TMyOracleSession;
+begin
+   if fActiveConnection<>'' then
+   begin
+     vIdx:=fConnections.IndexOf(fActiveConnection);
+     if vIdx>=0 then
+     begin
+       vMOS:=TMyOracleSession(fConnections.Objects[vIdx]);
+       vMOS.UnregisterFileTab(pFileName, pFileTab);
+     end;
+   end;
 end;
 
 procedure TFrmCodeCompletion.tvFunctionsCustomDrawItem(
@@ -2944,20 +2984,65 @@ constructor TMyOracleSession.Create(AOwner: TComponent; pConnectString: String);
 begin
   inherited Create(AOwner);
   connectString:=pConnectString;
-  editorsList := TStringList.Create;
+  fileTabList := TStringList.Create;
 end;
 
 destructor TMyOracleSession.Destroy;
 begin
   inherited;
-  editorsList.Free;
-  editorsList:=nil;
+  fileTabList.Free;
+  fileTabList:=nil;
   connectString:='';
+end;
+
+procedure TMyOracleSession.RegisterFileTab(pFileName: String; pFileTab: TTabSheet);
+begin
+{*}try
+  if not Assigned(pFileTab) then
+    exit;
+  fileTabList.AddObject(pFileName, pFileTab);
+{*}except
+{*}  raise CException.Create('UnregisterFileTab',0,self);
+{*}end;
 end;
 
 procedure TMyOracleSession.SetConnectionTab(const Value: TTabSheet);
 begin
   FConnectionTab := Value;
+end;
+
+procedure TMyOracleSession.ShowActiveFileTabs;
+var
+  vIdx: Integer;
+begin
+{*}try
+  for vIdx := 0 to frmTinnMain.pgFiles.PageCount-1 do
+    frmTinnMain.pgFiles.Pages[vIdx].TabVisible:=False;
+
+  for vIdx := 0 to fileTabList.Count-1 do
+    (fileTabList.Objects[vIdx] as TTabSheet).TabVisible:=True;
+
+//  frmTinnMain.WindowHideAll(fileTabList.Count=0);
+
+  Application.ProcessMessages;
+
+  frmTinnMain.pgFilesChange(nil);
+{*}except
+{*}  raise CException.Create('ShowActiveFileTabs',0,self);
+{*}end;
+end;
+
+procedure TMyOracleSession.UnregisterFileTab(pFileName: String; pFileTab: TTabSheet);
+var
+ vIdx : Integer;
+begin
+{*}try
+  vIdx := fileTabList.IndexOfObject(pFileTab);
+  if vIdx>-1 then
+    fileTabList.Delete(vIdx);
+{*}except
+{*}  raise CException.Create('UnregisterFileTab',0,self);
+{*}end;
 end;
 
 end.

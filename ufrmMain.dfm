@@ -107,7 +107,7 @@ object frmTinnMain: TfrmTinnMain
     ExplicitWidth = 1098
   end
   object leftSplitter: TSplitter
-    Left = 24
+    Left = 27
     Top = 53
     Width = 6
     Height = 602
@@ -126,13 +126,14 @@ object frmTinnMain: TfrmTinnMain
     PopupMenu = pmShowBar
     TabOrder = 0
     object AdvToolButton1: TAdvToolButton
-      Left = 1088
+      Left = 1080
       Top = 2
       Width = 23
       Height = 22
       AutoThemeAdapt = False
       ColorDown = 14210002
       ColorHot = 13289415
+      OnClick = AdvToolButton1Click
       Version = '1.6.1.0'
     end
     object tbFileBar: TToolBar
@@ -523,7 +524,7 @@ object frmTinnMain: TfrmTinnMain
     OnUnDock = panSearchResultsUnDock
   end
   object panProjectDockSite: TPanel
-    Left = 23
+    Left = 26
     Top = 53
     Width = 1
     Height = 602
@@ -534,17 +535,21 @@ object frmTinnMain: TfrmTinnMain
     OnDockDrop = panProjectDockSiteDockDrop
     OnGetSiteInfo = panProjectDockSiteGetSiteInfo
     OnUnDock = panProjectDockSiteUnDock
-    ExplicitLeft = 0
-    ExplicitHeight = 579
   end
   object pgConnections: TPageControl
     Left = 0
     Top = 53
-    Width = 23
+    Width = 26
     Height = 602
     Align = alLeft
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Myanmar Text'
+    Font.Style = []
     HotTrack = True
     MultiLine = True
+    ParentFont = False
     TabOrder = 5
     TabPosition = tpLeft
     Visible = False
