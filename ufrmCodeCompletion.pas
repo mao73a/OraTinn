@@ -43,6 +43,20 @@ type
 
 
 type
+
+  TMyOracleSession = class(TOracleSession)
+    private
+      connectString : String;
+      editorsList : TStringList;
+      FConnectionTab: TTabSheet;
+      procedure SetConnectionTab(const Value: TTabSheet);
+
+    public
+      constructor Create(AOwner: TComponent; pConnectString : String);overload;
+      destructor  Destroy;override;
+      property  ConnectionTab : TTabSheet read FConnectionTab write SetConnectionTab;
+  end;
+
   TFrmCodeCompletion = class(TForm)
     SynCompletionProposalAll: TSynCompletionProposal;
     pmConnectMenu: TPopupMenu;
@@ -151,7 +165,7 @@ type
     constructor Create(AOwner : TComponent; ACb: TControlBar; aConnectButton : TToolButton;
                         aStatusPanel : TStatusPanel; aCompileResults : TPanel;
                         aNewFileEvent : TNotifyEvent; aIniFile : TIniFile);
-    function Connect(pConnString, pUser, pPAss, PHost: String) : Boolean;
+    function Connect(pConnString, pUser, pPAss, pHost: String; pConnectionPageControl : TPageControl) : Boolean;
     procedure Disconnect;
     procedure SavePosition;
     function isFunction(pName : String) : Boolean;
@@ -162,7 +176,8 @@ type
     Procedure SaveExplorerToStream(S: TStream );
     procedure CycleJumpNextMark(var pMarkIdx : Integer);
     procedure ExecuteToHTML;
-    procedure GetFunctionList(pFunctionList: TStrings);    
+    procedure GetFunctionList(pFunctionList: TStrings);
+    procedure SetActiveConnection(pConnectString : String);
 
   published
     property Editor : TCustomSynEdit read FEditor write SetEditor;
@@ -930,12 +945,12 @@ begin
         try
           vTrace:='7';
           try
-            TOracleSession(fConnections.Objects[vIdx]).Connected:=False;
+            TMyOracleSession(fConnections.Objects[vIdx]).Connected:=False;
           except
-          end;  
+          end;
         finally
           vTrace:='8';
-          TOracleSession(fConnections.Objects[vIdx]).Free;
+          TMyOracleSession(fConnections.Objects[vIdx]).Free;
         end;
       end;
     vTrace:='9';
@@ -1323,7 +1338,7 @@ end;
 procedure TFrmCodeCompletion.Disconnect;
 var
  vPos : Integer;
- ase : TOracleSession;
+ ase : TMyOracleSession;
  vMi : TMenuItem;
 begin
 {*}try
@@ -1331,9 +1346,11 @@ begin
     vPos:=fConnections.IndexOf(fActiveConnection);
     if pmConnectMenu.Items.Count>vPos then
     begin
-      ase:=TOracleSession(fConnections.Objects[vPos]);
+      ase:=TMyOracleSession(fConnections.Objects[vPos]);
       try
         ase.Connected:=False;
+        ase.ConnectionTab.PageControl.Visible := ase.ConnectionTab.PageControl.PageCount>1;
+        ase.ConnectionTab.Free;
       except
          //wyciszam bledy zwiazane z wylaczeniem bazy w czasie polaczenia
       end;
@@ -1347,7 +1364,9 @@ begin
       if pmConnectMenu.Items.Count>0 then
         if Assigned(pmConnectMenu.Items[pmConnectMenu.Items.Count-1]) then
           vMi:=pmConnectMenu.Items[pmConnectMenu.Items.Count-1];
+
       MyConnectionChange(vMi);
+
     end;
 {*}except
 {*}  raise CException.Create('Disconnect',0,self);
@@ -1355,11 +1374,12 @@ begin
 end;
 
 
-function TFrmCodeCompletion.Connect(pConnString, pUser, pPAss, pHost: String) : Boolean;
+function TFrmCodeCompletion.Connect(pConnString, pUser, pPAss, pHost: String; pConnectionPageControl : TPageControl) : Boolean;
 var
- vConn : TOracleSession;
+ vConn : TMyOracleSession;
  vMI : TMenuItem;
  vPos : Integer;
+ vConnectionTab : TTabSheet;
 begin
   try
     vPos:=fConnections.IndexOf(UpperCase(pConnString));
@@ -1368,10 +1388,10 @@ begin
          fActiveConnection:=fConnections[vPos];
          MyConnectionChange(nil);
       end;
-      result:=True;      
+      result:=True;
       exit;
     end;
-    vConn:=TOracleSession.Create(Self);
+    vConn:=TMyOracleSession.Create(Self, UpperCase(pConnString));
     vConn.LogonUsername:=UpperCase(pUser);
     vConn.LogonPassword:=pPass;
     vConn.LogonDatabase:=UpperCase(pHost);
@@ -1381,6 +1401,20 @@ begin
     vMI.Caption:=UpperCase(pConnString);
     vMI.OnClick:=MyConnectionChange;
     pmConnectMenu.Items.Add(vMI);
+
+    if Assigned(pConnectionPageControl) then
+    begin
+      vConnectionTab := TTabSheet.Create(frmTinnMain);
+      with vConnectionTab do
+      begin
+        PageControl := pConnectionPageControl;
+        Caption := pConnString;
+        Hint := Caption;
+        ShowHint := True;
+        vConn.ConnectionTab:=vConnectionTab;
+      end;
+    end;
+
     MyConnectionChange(vMI);
     result:=True;
   except
@@ -1395,27 +1429,27 @@ begin
   end;
 end;
 
-procedure TFrmCodeCompletion.MyConnectionChange(Sender: TObject);
+
+procedure TFrmCodeCompletion.SetActiveConnection(pConnectString : String);
 var
- vConnectStr : String;
  vPos: Integer;
+ vMOS : TMyOracleSession;
 begin
 {*}try
-    if Sender<>nil then
-      vConnectStr := StringReplace((Sender as TMenuItem).Caption, '&', '', [])
-    else
-      vConnectStr:=fActiveConnection;
-    vPos:=fConnections.IndexOf(vConnectStr);
+    vPos:=fConnections.IndexOf(pConnectString);
     if vPos<>-1 then
     begin
       fObjectsLoaded:=False;
-      fActiveConnection:=vConnectStr;
-      fspConnection.Text:=vConnectStr;
+      fActiveConnection:=pConnectString;
+      fspConnection.Text:=pConnectString;
       dsCompile.Close;
       dsDetail.Close;
-      dsCompile.Session:=TOracleSession(fConnections.Objects[vPos]);
+      vMOS:=TMyOracleSession(fConnections.Objects[vPos]);
+      dsCompile.Session:=vMOS;
+      vMOS.ConnectionTab.PageControl.ActivePage := vMOS.ConnectionTab;
+      vMOS.ConnectionTab.PageControl.Visible := vMOS.ConnectionTab.PageControl.PageCount>1;
       tsDB.TabVisible:=True;
-      tsDB.Caption:=vConnectStr;
+      tsDB.Caption:=pConnectString;
       LoadObjectsList;
       fObjectsLoaded:=True;
     end
@@ -1426,6 +1460,24 @@ begin
       tsDB.Caption:='';
       fspConnection.Text:='';
     end;
+{*}except
+{*}  raise CException.Create('SetActiveConnection',0,self);
+{*}end;
+end;
+
+procedure TFrmCodeCompletion.MyConnectionChange(Sender: TObject);
+var
+ vConnectStr : String;
+
+begin
+{*}try
+    if Sender<>nil then
+      vConnectStr := StringReplace((Sender as TMenuItem).Caption, '&', '', [])
+    else
+      vConnectStr:=fActiveConnection;
+
+    SetActiveConnection( vConnectStr);
+
 {*}except
 {*}  raise CException.Create('MyConnectionChange',0,self);
 {*}end;
@@ -2207,7 +2259,7 @@ begin
         vIdx:=pos('@',vStr);
         vPass:=copy(vStr,0, vIdx-1);
         vHost:=copy(vStr,vIdx+1,100);
-        Connect(vUser+'@'+vHost,vUser, vPass, vHost);
+        Connect(vUser+'@'+vHost,vUser, vPass, vHost,nil);
         exit;
     end
     else if (vSQLType='DESC') then begin
@@ -2885,6 +2937,28 @@ begin
 
 end;
 
+
+{ TMyOracleSession }
+
+constructor TMyOracleSession.Create(AOwner: TComponent; pConnectString: String);
+begin
+  inherited Create(AOwner);
+  connectString:=pConnectString;
+  editorsList := TStringList.Create;
+end;
+
+destructor TMyOracleSession.Destroy;
+begin
+  inherited;
+  editorsList.Free;
+  editorsList:=nil;
+  connectString:='';
+end;
+
+procedure TMyOracleSession.SetConnectionTab(const Value: TTabSheet);
+begin
+  FConnectionTab := Value;
+end;
 
 end.
 

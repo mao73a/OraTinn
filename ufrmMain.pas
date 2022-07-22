@@ -22,7 +22,7 @@ uses
   SynEdit, SynEditPrint, SynEditHighlighter, SynRegExpr,
   SynHighlighterMulti, SynEditTypes, Buttons, SynEditPlugins, SynMacroRecorder,
   SynEditOptionsDialog, ufrmSearchResults, ufrmProject, ufrmCodeCompletion,
-  SynCompletionProposal, uTypesE, uFormExternalTools;
+  SynCompletionProposal, uTypesE, uFormExternalTools, AdvToolBtn;
 
 const
  WM_OPENEDITOR = WM_USER + 1;
@@ -35,6 +35,7 @@ var
 
 
 type
+
 
   TfrmTinnMain = class(TForm)
     alStandard: TActionList;
@@ -250,6 +251,8 @@ type
     aDuplicateLine: TAction;
     aMoveBlockDown: TAction;
     Copyinipath1: TMenuItem;
+    pgConnections: TPageControl;
+    AdvToolButton1: TAdvToolButton;
     procedure WindowArrange1Execute(Sender: TObject);
     procedure WindowCascade1Execute(Sender: TObject);
     procedure WindowMinimizeAll1Execute(Sender: TObject);
@@ -355,6 +358,7 @@ type
     procedure aDuplicateLineExecute(Sender: TObject);
     procedure aMoveBlockDownExecute(Sender: TObject);
     procedure Copyinipath1Click(Sender: TObject);
+    procedure pgConnectionsChange(Sender: TObject);
 
   private
     { Private declarations }
@@ -577,7 +581,7 @@ begin
       vUser:=UpperCase(copy(iFile, 1, intPos1-1));
       vPass:=copy(iFile, intPos1+1, intPos2-intPos1-1);
       vDB:=UpperCase(copy(iFile, intPos2+1, intPos3-intPos2-1));
-      vConnected:=frmExplorer.Connect(vUser+'@'+vDB, vUser, vPass, vDB);
+      vConnected:=frmExplorer.Connect(vUser+'@'+vDB, vUser, vPass, vDB, pgConnections);
        if not vConnected then
          Application.MessageBox(PChar('Cannot connect to database'),PChar('Oracle error'),MB_ICONHAND+MB_OK);
 
@@ -1871,6 +1875,7 @@ begin
     externalTools.StoreToFile(iniFile);
   iniFile.free;
 end;
+
 
 procedure TfrmTinnMain.pgFilesChange(Sender: TObject);
 var
@@ -3381,6 +3386,18 @@ begin
 
 end;
 
+
+procedure TfrmTinnMain.pgConnectionsChange(Sender: TObject);
+var
+  tmpstr : String;
+begin
+  if Assigned(pgConnections.ActivePage) then
+  begin
+    tmpstr := pgConnections.ActivePage.Hint;
+    frmExplorer.SetActiveConnection(tmpstr);
+  end;
+end;
+
 procedure TfrmTinnMain.actConnectExecute(Sender: TObject);
 var
   vForm : TFrmConnect;
@@ -3395,8 +3412,7 @@ begin
       begin
         if vForm.vUser<>'' then
         begin
-           vConnected:=frmExplorer.Connect(vForm.ConnectString,vForm.vUser,
-              vForm.vPass, vForm.vHost);
+           vConnected:=frmExplorer.Connect(vForm.ConnectString,vForm.vUser, vForm.vPass, vForm.vHost, pgConnections);
            if vConnected then
              vForm.Post
            else
@@ -3409,6 +3425,9 @@ begin
     vForm.Free;
     Screen.cursor:=crDefault;
   end;
+
+
+
 end;
 
 procedure TfrmTinnMain.actCompileExecute(Sender: TObject);
@@ -3451,7 +3470,7 @@ begin
   Screen.Cursor:=crDefault;
   if E is CException then
     Application.MessageBox(PChar(CException(E).ReadHistory[0] + #13#10 + #13#10 +
-                        '________________________________________________' + #13#10+
+                        '________________________________________' + #13#10+
                         CException(E).ReadHistory.GetText), PChar('Handled Application Error'), MB_ICONEXCLAMATION)
   else
     Application.MessageBox(PChar(E.message),PChar('Application Error'),MB_ICONEXCLAMATION);
@@ -3590,6 +3609,7 @@ begin
     frmExplorer.RefactorChangeName(vOldText, vText, SynMR.Editor.CaretXY.Line);
   end;
 end;
+
 
 Initialization
   WM_FINDINSTANCE := RegisterWindowMessage('Editor: find previous instance');

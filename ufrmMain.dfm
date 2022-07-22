@@ -1,9 +1,9 @@
 object frmTinnMain: TfrmTinnMain
-  Left = 339
-  Top = 178
+  Left = 343
+  Top = 154
   Caption = 'Tinn'
   ClientHeight = 688
-  ClientWidth = 1090
+  ClientWidth = 1147
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -84,7 +84,7 @@ object frmTinnMain: TfrmTinnMain
     00FFFFE003FFFFE00FFFFFF03FFFFFF0FFFFFFF3FFFFFFFFFFFFFFFFFFFF}
   Menu = MainMenu1
   OldCreateOrder = False
-  Position = poDefault
+  Position = poDesigned
   ShowHint = True
   Visible = True
   WindowMenu = Window1
@@ -97,7 +97,7 @@ object frmTinnMain: TfrmTinnMain
   object splitterBottom: TSplitter
     Left = 0
     Top = 655
-    Width = 1090
+    Width = 1147
     Height = 6
     Cursor = crVSplit
     Align = alBottom
@@ -107,23 +107,34 @@ object frmTinnMain: TfrmTinnMain
     ExplicitWidth = 1098
   end
   object leftSplitter: TSplitter
-    Left = 1
+    Left = 24
     Top = 53
     Width = 6
     Height = 602
     Visible = False
+    ExplicitLeft = 1
     ExplicitHeight = 611
   end
   object ControlBar1: TControlBar
     Left = 0
     Top = 0
-    Width = 1090
+    Width = 1147
     Height = 30
     Align = alTop
     AutoSize = True
     DockSite = False
     PopupMenu = pmShowBar
     TabOrder = 0
+    object AdvToolButton1: TAdvToolButton
+      Left = 1088
+      Top = 2
+      Width = 23
+      Height = 22
+      AutoThemeAdapt = False
+      ColorDown = 14210002
+      ColorHot = 13289415
+      Version = '1.6.1.0'
+    end
     object tbFileBar: TToolBar
       Left = 11
       Top = 2
@@ -462,7 +473,7 @@ object frmTinnMain: TfrmTinnMain
   object StatusBar: TStatusBar
     Left = 0
     Top = 667
-    Width = 1090
+    Width = 1147
     Height = 21
     Constraints.MaxHeight = 21
     Constraints.MinHeight = 20
@@ -487,10 +498,11 @@ object frmTinnMain: TfrmTinnMain
   object pgFiles: TPageControl
     Left = 0
     Top = 30
-    Width = 1090
+    Width = 1147
     Height = 23
     Align = alTop
     HotTrack = True
+    Style = tsButtons
     TabOrder = 2
     OnChange = pgFilesChange
     OnDragDrop = pgFilesDragDrop
@@ -500,7 +512,7 @@ object frmTinnMain: TfrmTinnMain
   object panSearchResults: TPanel
     Left = 0
     Top = 661
-    Width = 1090
+    Width = 1147
     Height = 6
     Align = alBottom
     BevelOuter = bvNone
@@ -511,7 +523,7 @@ object frmTinnMain: TfrmTinnMain
     OnUnDock = panSearchResultsUnDock
   end
   object panProjectDockSite: TPanel
-    Left = 0
+    Left = 23
     Top = 53
     Width = 1
     Height = 602
@@ -522,6 +534,21 @@ object frmTinnMain: TfrmTinnMain
     OnDockDrop = panProjectDockSiteDockDrop
     OnGetSiteInfo = panProjectDockSiteGetSiteInfo
     OnUnDock = panProjectDockSiteUnDock
+    ExplicitLeft = 0
+    ExplicitHeight = 579
+  end
+  object pgConnections: TPageControl
+    Left = 0
+    Top = 53
+    Width = 23
+    Height = 602
+    Align = alLeft
+    HotTrack = True
+    MultiLine = True
+    TabOrder = 5
+    TabPosition = tpLeft
+    Visible = False
+    OnChange = pgConnectionsChange
   end
   object alStandard: TActionList
     Left = 16
