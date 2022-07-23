@@ -48,7 +48,6 @@ type
 
   end;
 
-
   TfrmTinnMain = class(TForm)
     alStandard: TActionList;
     WindowArrange1: TWindowArrange;
@@ -387,6 +386,7 @@ type
     procedure pgConnectionsDragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
     procedure pgConnectionsDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure pgConnectionsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    function FindTabUnderMouse(pPageControl : TPageControl; X, Y: Integer) : TTabSheet;
   private
     { Private declarations }
 
@@ -407,6 +407,7 @@ type
     gboolSearchOpenFiles : boolean;
     SearchRegEx : TRegExpr;
     InExecute: Boolean;
+    fDraggedTabSheet : TTabSheet;
 
 
     procedure FindIniFilePath;
@@ -1091,6 +1092,7 @@ var
  tmpName : string;
 begin
  DragAcceptFiles(Handle, True);
+ fDraggedTabSheet:=nil;
  StartingUp := True;
  MRUList := TStringList.Create;
  ProjectMRUList := TStringList.Create;
@@ -2051,6 +2053,7 @@ end;
 procedure TfrmTinnMain.FormActivate(Sender: TObject);
 begin
 	CheckForNewFileStart;
+
 end;
 
 procedure TfrmTinnMain.timerStartNewFileTimer(Sender: TObject);
@@ -3267,36 +3270,37 @@ begin
       if i > -1 then
         Self.MDIChildren[i].Close;
     end;
-  end else
+  end else begin
     pgFiles.BeginDrag(False);
+    fDraggedTabSheet:=pgFiles.ActivePage;
+  end;
 end;
 
 procedure TfrmTinnMain.pgFilesDragDrop(Sender, Source: TObject; X,  Y: Integer);
-const
-  TCM_GETITEMRECT = $130A;
 var
-  i: Integer;
-  r: TRect;
+ vTargetTab : TTabSheet;
 begin
   if not (Sender is TPageControl) then Exit;
-
-  if (Sender=pgFiles) then
-  begin
-    with pgFiles do
+  try
+    if Assigned(fDraggedTabSheet) and (fDraggedTabSheet.PageControl=pgFiles) then
     begin
-     (Source as TPageControl).EndDrag(False);
-      for i := 0 to PageCount - 1 do
+      vTargetTab := FindTabUnderMouse(pgFiles, X, Y);
+      if Assigned(vTargetTab) and (pgFiles.ActivePage<>vTargetTab) then
+         pgFiles.ActivePage.PageIndex:=vTargetTab.PageIndex;
+    end;
+
+    if Assigned(fDraggedTabSheet) and (fDraggedTabSheet.PageControl=pgConnections) then
+    begin
+      if fDraggedTabSheet.PageControl=pgConnections then
       begin
-        Perform(TCM_GETITEMRECT, i, lParam(@r));
-        if PtInRect(r, Point(X, Y)) then
-        begin
-          if i <> ActivePage.PageIndex then
-            ActivePage.PageIndex := i;
-          Exit;
-        end;
+        ShowMessage('Source: connections: '+fDraggedTabSheet.Caption);
       end;
     end;
+
+  finally
+    fDraggedTabSheet:=nil;
   end;
+
 end;
 
 procedure TfrmTinnMain.pgFilesDragOver(Sender, Source: TObject; X,
@@ -3399,27 +3403,58 @@ begin
   end;
 end;
 
-procedure TfrmTinnMain.pgConnectionsDragDrop(Sender, Source: TObject; X, Y: Integer);
+function TfrmTinnMain.FindTabUnderMouse(pPageControl : TPageControl; X, Y: Integer) : TTabSheet;
 const
   TCM_GETITEMRECT = $130A;
 var
   i: Integer;
   r: TRect;
 begin
+  result:=nil;
+  with pPageControl do
+  begin
+    for i := 0 to PageCount - 1 do
+    begin
+      Perform(TCM_GETITEMRECT, i, lParam(@r));
+      if PtInRect(r, Point(X, Y)) then
+      begin
+        result:=Pages[i];
+        Exit;
+      end;
+    end;
+  end;
+end;
+
+procedure TfrmTinnMain.pgConnectionsDragDrop(Sender, Source: TObject; X, Y: Integer);
+var
+  vTargetTab : TTabSheet;
+begin
   try
     if not (Sender is TPageControl) then Exit;
-    with pgConnections do
-    begin
-      for i := 0 to PageCount - 1 do
+    try
+      if Assigned(fDraggedTabSheet) and (fDraggedTabSheet.PageControl=pgConnections) then
       begin
-        Perform(TCM_GETITEMRECT, i, lParam(@r));
-        if PtInRect(r, Point(X, Y)) then
+        vTargetTab := FindTabUnderMouse(pgConnections, X, Y);
+        if Assigned(vTargetTab) and (pgConnections.ActivePage<>vTargetTab) then
+           pgConnections.ActivePage.PageIndex:=vTargetTab.PageIndex;
+      end;
+
+      if Assigned(fDraggedTabSheet) and (fDraggedTabSheet.PageControl=pgFiles) then
+      begin
         begin
-          if i <> ActivePage.PageIndex then
-            ActivePage.PageIndex := i;
-          Exit;
+          vTargetTab := FindTabUnderMouse(pgConnections, X, Y);
+          if Assigned(vTargetTab) then
+          begin
+            if frmExplorer.AssignWindowToConnection(vTargetTab.Caption, fDraggedTabSheet.Caption, fDraggedTabSheet) then
+               StatusBar.Panels[0].Text:='File assigned successfully'
+            else
+              StatusBar.Panels[0].Text:='File no assigned :-(';
+            frmExplorer.ShowActiveFileTabs;
+          end;
         end;
       end;
+    finally
+       fDraggedTabSheet:=nil;
     end;
   except
     raise CException.Create('pgConnectionsDragDrop',0,self);
@@ -3439,7 +3474,8 @@ end;
 procedure TfrmTinnMain.pgConnectionsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   try
-    pgFiles.BeginDrag(False);
+    pgConnections.BeginDrag(False);
+    fDraggedTabSheet:=pgConnections.ActivePage;
   except
     raise CException.Create('pgConnectionsMouseDown',0,self);
   end;

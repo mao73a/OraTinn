@@ -168,6 +168,7 @@ type
     procedure ExecuteQuery;
     procedure MyConnectionChange(Sender: TObject);
     function AssignWindowToCurrentConnection(pFileName: String; pFileTab: TTabSheet) : Boolean;
+    function AssignWindowToConnection(pConnection : String; pFileName: String; pFileTab: TTabSheet) : Boolean;
     procedure SetActiveConnectionPageTab(pActivePageTab : TTabSheet);
     procedure MySynEditChange(Sender: TObject);
     constructor Create(AOwner : TComponent; ACb: TControlBar; aConnectButton : TToolButton;
@@ -186,6 +187,7 @@ type
     procedure ExecuteToHTML;
     procedure GetFunctionList(pFunctionList: TStrings);
     procedure SetActiveConnection(pConnectString : String);
+    procedure ShowActiveFileTabs;
     procedure RegisterFileForActiveConnection(pFileName : String; pFileTab : TTabSheet);
     procedure UnregisterFileFromActiveConnection(pFileName: String; pFileTab: TTabSheet);
     procedure RegisterUnregisteredTabs(pConnection : TMyOracleSession);
@@ -1490,6 +1492,21 @@ begin
 {*}end;
 end;
 
+procedure TFrmCodeCompletion.ShowActiveFileTabs;
+var
+ vPos: Integer;
+ vMOS : TMyOracleSession;
+begin
+  vPos:=fConnections.IndexOf(fActiveConnection);
+  if vPos<>-1 then
+  begin
+    vMOS:=TMyOracleSession(fConnections.Objects[vPos]);
+    if not ShowAllFiles then
+      vMOS.ShowActiveFileTabs;
+  end;
+
+end;
+
 procedure TFrmCodeCompletion.SetActiveConnectionPageTab(pActivePageTab : TTabSheet);
 var
  vCurrentIdx : Integer;
@@ -1506,16 +1523,16 @@ begin
 {*}end;
 end;
 
-function TFrmCodeCompletion.AssignWindowToCurrentConnection(pFileName: String; pFileTab: TTabSheet) : Boolean;
+function TFrmCodeCompletion.AssignWindowToConnection(pConnection : String; pFileName: String; pFileTab: TTabSheet) : Boolean;
 var
  vCurrentIdx, vIdx: Integer;
  vMOS : TMyOracleSession;
  vFOund : Boolean;
 begin
    vFound:=False;
-   if fActiveConnection<>'' then
+   if pConnection<>'' then
    begin
-     vCurrentIdx:=fConnections.IndexOf(fActiveConnection);
+     vCurrentIdx:=fConnections.IndexOf(pConnection);
      if vCurrentIdx>=0 then
      begin
        for vIdx := 0 to fConnections.Count-1 do
@@ -1533,6 +1550,12 @@ begin
    end;
    result := vFound;
 end;
+
+function TFrmCodeCompletion.AssignWindowToCurrentConnection( pFileName: String; pFileTab: TTabSheet) : Boolean;
+begin
+  AssignWindowToConnection(fActiveConnection, pFileName, pFileTab);
+end;
+
 
 procedure TFrmCodeCompletion.MyConnectionChange(Sender: TObject);
 var

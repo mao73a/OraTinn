@@ -14,6 +14,8 @@ object FrmCodeCompletion: TFrmCodeCompletion
   OldCreateOrder = False
   OnClose = FormClose
   OnDestroy = FormDestroy
+  ExplicitWidth = 320
+  ExplicitHeight = 240
   PixelsPerInch = 96
   TextHeight = 13
   object tsFile: TPageControl
@@ -26,6 +28,10 @@ object FrmCodeCompletion: TFrmCodeCompletion
     TabOrder = 0
     object TabSheet1: TTabSheet
       Caption = 'Editor'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object tvFunctions: TTreeView
         Left = 0
         Top = 0

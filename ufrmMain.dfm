@@ -566,9 +566,6 @@ object frmTinnMain: TfrmTinnMain
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 6
-    ExplicitLeft = 962
-    ExplicitWidth = 602
-    ExplicitHeight = 185
   end
   object alStandard: TActionList
     Left = 16
