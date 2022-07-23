@@ -25,7 +25,6 @@ const
  TSynValidStringChars = ['_', '0'..'9', 'A'..'Z', 'a'..'z'] + TSynSpecialChars;
 
 
-
 type
   TFunctionCall=record
     Name, Package : String;
@@ -153,6 +152,7 @@ type
     Highlight1: TMenuItem;
     RefactorRename1: TMenuItem;
     N15: TMenuItem;
+    aMmoveTo: TMenuItem;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure Tile1Click(Sender: TObject);
     procedure Cascade1Click(Sender: TObject);
@@ -2694,6 +2694,7 @@ procedure TfrmEditor.RefactorRename1Click(Sender: TObject);
 begin
    frmTinnMain.RefactorRename(Sender);
 end;
+
 end.
 
 

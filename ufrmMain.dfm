@@ -535,6 +535,8 @@ object frmTinnMain: TfrmTinnMain
     OnDockDrop = panProjectDockSiteDockDrop
     OnGetSiteInfo = panProjectDockSiteGetSiteInfo
     OnUnDock = panProjectDockSiteUnDock
+    ExplicitLeft = 0
+    ExplicitHeight = 576
   end
   object pgConnections: TPageControl
     Left = 0
@@ -554,6 +556,9 @@ object frmTinnMain: TfrmTinnMain
     TabPosition = tpLeft
     Visible = False
     OnChange = pgConnectionsChange
+    OnDragDrop = pgConnectionsDragDrop
+    OnDragOver = pgConnectionsDragOver
+    OnMouseDown = pgConnectionsMouseDown
   end
   object alStandard: TActionList
     Left = 16
@@ -2340,12 +2345,27 @@ object frmTinnMain: TfrmTinnMain
       object ArrangeIcons1: TMenuItem
         Action = WindowArrange1
       end
+      object N11: TMenuItem
+        Caption = '-'
+      end
       object CC1: TMenuItem
         Action = WindowExplorer
       end
       object Free1: TMenuItem
         Caption = 'Free'
         OnClick = Free1Click
+      end
+      object N12: TMenuItem
+        Caption = '-'
+      end
+      object Showallfileshere1: TMenuItem
+        Action = aShowAllFiles
+      end
+      object Assignwindowtocurrent1: TMenuItem
+        Action = aAssignThisWindowHere
+      end
+      object Assignallwindowshere1: TMenuItem
+        Action = aAssignAllWindowsHere
       end
     end
     object HelpMenu1: TMenuItem
@@ -2882,6 +2902,17 @@ object frmTinnMain: TfrmTinnMain
     object aMoveBlockDown: TAction
       Caption = 'Move Block Down'
       OnExecute = aMoveBlockDownExecute
+    end
+    object aShowAllFiles: TAction
+      Caption = 'Show all windows'
+      OnExecute = aShowAllFilesExecute
+    end
+    object aAssignThisWindowHere: TAction
+      Caption = 'Assign window here'
+      OnExecute = aAssignThisWindowHereExecute
+    end
+    object aAssignAllWindowsHere: TAction
+      Caption = 'Assign all windows here'
     end
   end
   object SynEditOptionsDialog2: TSynEditOptionsDialog

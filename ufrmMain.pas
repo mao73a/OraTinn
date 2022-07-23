@@ -265,6 +265,14 @@ type
     Copyinipath1: TMenuItem;
     pgConnections: TPageControl;
     AdvToolButton1: TAdvToolButton;
+    aShowAllFiles: TAction;
+    N11: TMenuItem;
+    N12: TMenuItem;
+    Showallfileshere1: TMenuItem;
+    aAssignThisWindowHere: TAction;
+    Assignwindowtocurrent1: TMenuItem;
+    aAssignAllWindowsHere: TAction;
+    Assignallwindowshere1: TMenuItem;
     procedure WindowArrange1Execute(Sender: TObject);
     procedure WindowCascade1Execute(Sender: TObject);
     procedure WindowMinimizeAll1Execute(Sender: TObject);
@@ -373,6 +381,11 @@ type
     procedure pgConnectionsChange(Sender: TObject);
     procedure WindowHideAll(pHide : Boolean);
     procedure AdvToolButton1Click(Sender: TObject);
+    procedure aShowAllFilesExecute(Sender: TObject);
+    procedure aAssignThisWindowHereExecute(Sender: TObject);
+    procedure pgConnectionsDragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
+    procedure pgConnectionsDragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure pgConnectionsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
   private
     { Private declarations }
 
@@ -805,6 +818,8 @@ begin
  	ShowGrepBar1.Checked      := tbRegExFilterBar.Visible;
  	pmShowRegExBar.Checked    := tbRegExFilterBar.Visible;
 end;
+
+
 
 procedure TfrmTinnMain.AboutExecute(Sender: TObject);
 begin
@@ -3256,8 +3271,7 @@ begin
     pgFiles.BeginDrag(False);
 end;
 
-procedure TfrmTinnMain.pgFilesDragDrop(Sender, Source: TObject; X,
-  Y: Integer);
+procedure TfrmTinnMain.pgFilesDragDrop(Sender, Source: TObject; X,  Y: Integer);
 const
   TCM_GETITEMRECT = $130A;
 var
@@ -3265,26 +3279,30 @@ var
   r: TRect;
 begin
   if not (Sender is TPageControl) then Exit;
-  with pgFiles do
+
+  if (Sender=pgFiles) then
   begin
-    for i := 0 to PageCount - 1 do
+    with pgFiles do
     begin
-      Perform(TCM_GETITEMRECT, i, lParam(@r));
-      if PtInRect(r, Point(X, Y)) then
+     (Source as TPageControl).EndDrag(False);
+      for i := 0 to PageCount - 1 do
       begin
-        if i <> ActivePage.PageIndex then
-          ActivePage.PageIndex := i;
-        Exit;
+        Perform(TCM_GETITEMRECT, i, lParam(@r));
+        if PtInRect(r, Point(X, Y)) then
+        begin
+          if i <> ActivePage.PageIndex then
+            ActivePage.PageIndex := i;
+          Exit;
+        end;
       end;
     end;
-  end; 
-
+  end;
 end;
 
 procedure TfrmTinnMain.pgFilesDragOver(Sender, Source: TObject; X,
   Y: Integer; State: TDragState; var Accept: Boolean);
 begin
-  if Sender is TPageControl then
+  if (Sender is TPageControl) and (Source=pgFiles) then
     Accept := True;
 end;
 
@@ -3377,6 +3395,52 @@ begin
   begin
     tmpstr := pgConnections.ActivePage.Hint;
     frmExplorer.SetActiveConnection(tmpstr);
+  end;
+end;
+
+procedure TfrmTinnMain.pgConnectionsDragDrop(Sender, Source: TObject; X, Y: Integer);
+const
+  TCM_GETITEMRECT = $130A;
+var
+  i: Integer;
+  r: TRect;
+begin
+  try
+    if not (Sender is TPageControl) then Exit;
+    with pgConnections do
+    begin
+      for i := 0 to PageCount - 1 do
+      begin
+        Perform(TCM_GETITEMRECT, i, lParam(@r));
+        if PtInRect(r, Point(X, Y)) then
+        begin
+          if i <> ActivePage.PageIndex then
+            ActivePage.PageIndex := i;
+          Exit;
+        end;
+      end;
+    end;
+  except
+    raise CException.Create('pgConnectionsDragDrop',0,self);
+  end;
+end;
+
+procedure TfrmTinnMain.pgConnectionsDragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
+begin
+  try
+    if Sender is TPageControl then
+      Accept := True;
+  except
+    raise CException.Create('pgConnectionsDragOver',0,self);
+  end;
+end;
+
+procedure TfrmTinnMain.pgConnectionsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  try
+    pgFiles.BeginDrag(False);
+  except
+    raise CException.Create('pgConnectionsMouseDown',0,self);
   end;
 end;
 
@@ -3577,6 +3641,31 @@ begin
   end;
 end;
 
+
+procedure TfrmTinnMain.aShowAllFilesExecute(Sender: TObject);
+var
+  j : Integer;
+begin
+  aShowAllFiles.Checked := not aShowAllFiles.Checked;
+  frmExplorer.ShowAllFiles :=  aShowAllFiles.Checked;
+  for j := 0 to pgFiles.PageCount -1 do
+  begin
+    pgFiles.Pages[j].TabVisible:=aShowAllFiles.Checked;
+  end;
+  if not aShowAllFiles.Checked then
+    pgConnectionsChange(nil);
+end;
+
+procedure TfrmTinnMain.aAssignThisWindowHereExecute(Sender: TObject);
+begin
+  if Assigned(pgFiles.ActivePage) then
+  begin
+    if frmExplorer.AssignWindowToCurrentConnection(pgFiles.ActivePage.Caption, pgFiles.ActivePage) then
+       StatusBar.Panels[0].Text:='File assigned successfully'
+    else
+      StatusBar.Panels[0].Text:='File no assigned :-(';
+  end;
+end;
 
 procedure TfrmTinnMain.RefactorRename(Sender: TObject);
 var

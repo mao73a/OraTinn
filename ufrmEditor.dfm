@@ -307,6 +307,10 @@ object frmEditor: TfrmEditor
       Caption = 'Highlight'
       OnClick = Highlight1Click
     end
+    object aMmoveTo: TMenuItem
+      Caption = 'MoveWindowTo'
+      Visible = False
+    end
   end
   object alEdit: TActionList
     Images = frmTinnMain.ToolbarImages

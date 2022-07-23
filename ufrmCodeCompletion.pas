@@ -55,7 +55,7 @@ type
       destructor  Destroy;override;
       property  ConnectionTab : TTabSheet read FConnectionTab write SetConnectionTab;
       procedure RegisterFileTab(pFileName : String; pFileTab: TTabSheet);
-      procedure UnregisterFileTab(pFileName : String; pFileTab: TTabSheet);
+      function UnregisterFileTab(pFileName : String; pFileTab: TTabSheet) : Boolean;
       procedure ShowActiveFileTabs;
   end;
 
@@ -143,6 +143,7 @@ type
     TimerLoadOnClick_pPackage : String;
     TimerLoadOnClick_pFunction : String;
     fPackageNameMatchList : TStrings;
+    FShowAllFiles: Boolean;
     procedure SetEditor(const Value: TCustomSynEdit);
     procedure SetModificationMark;
     procedure ShowFunction(pFunction : String; pCount : Integer);
@@ -151,6 +152,7 @@ type
     function GetQueryText : String;
     function PackageNameMatch(pSQLObjectName,pLogonUsername : String) : Boolean;
     function FastCharIndexToRow(  Index,pPrevLine : Integer; var pPrevChars: integer): Integer;
+    procedure SetShowAllFiles(const Value: Boolean);
 //    fEditor : TCustomSynEdit;
   public
     { Public declarations }
@@ -163,6 +165,8 @@ type
     procedure Compile;
     procedure ExecuteQuery;
     procedure MyConnectionChange(Sender: TObject);
+    function AssignWindowToCurrentConnection(pFileName: String; pFileTab: TTabSheet) : Boolean;
+    function CutFileTabFromConnection(pFileTab : TTabSheet; var pOutFileName : String) : Boolean;
     procedure MySynEditChange(Sender: TObject);
     constructor Create(AOwner : TComponent; ACb: TControlBar; aConnectButton : TToolButton;
                         aStatusPanel : TStatusPanel; aCompileResults : TPanel;
@@ -182,10 +186,12 @@ type
     procedure SetActiveConnection(pConnectString : String);
     procedure RegisterFileForActiveConnection(pFileName : String; pFileTab : TTabSheet);
     procedure UnregisterFileFromActiveConnection(pFileName: String; pFileTab: TTabSheet);
+    procedure RegisterUnregisteredTabs(pConnection : TMyOracleSession);
 
   published
     property Editor : TCustomSynEdit read FEditor write SetEditor;
     property HighlightList : String read FHighlightList write SetHighlightList;
+    property ShowAllFiles : Boolean read FShowAllFiles write SetShowAllFiles;
  end;
 
 
@@ -1419,7 +1425,8 @@ begin
         vConn.ConnectionTab:=vConnectionTab;
       end;
     end;
-
+    if fConnections.Count=1 then
+      RegisterUnregisteredTabs(vConn);
     MyConnectionChange(vMI);
     result:=True;
   except
@@ -1434,6 +1441,13 @@ begin
   end;
 end;
 
+procedure TFrmCodeCompletion.RegisterUnregisteredTabs(pConnection : TMyOracleSession);
+var
+  vIdx : Integer;
+begin
+  for vIdx := 0 to frmTinnMain.pgFiles.PageCount-1 do
+    pConnection.RegisterFileTab(frmTinnMain.pgFiles.Pages[vIdx].Caption, frmTinnMain.pgFiles.Pages[vIdx]);
+end;
 
 
 procedure TFrmCodeCompletion.SetActiveConnection(pConnectString : String);
@@ -1454,7 +1468,8 @@ begin
       dsCompile.Session:=vMOS;
       vMOS.ConnectionTab.PageControl.ActivePage := vMOS.ConnectionTab;
       vMOS.ConnectionTab.PageControl.Visible := vMOS.ConnectionTab.PageControl.PageCount>1;
-      vMOS.ShowActiveFileTabs;
+      if not ShowAllFiles then
+        vMOS.ShowActiveFileTabs;
       tsDB.TabVisible:=True;
       tsDB.Caption:=pConnectString;
       LoadObjectsList;
@@ -1473,10 +1488,55 @@ begin
 {*}end;
 end;
 
+function TFrmCodeCompletion.CutFileTabFromConnection(pFileTab : TTabSheet; var pOutFileName : String) : Boolean;
+var
+ vIdx: Integer;
+ vMOS : TMyOracleSession;
+ vOutFileName : String;
+begin
+   for vIdx := 0 to fConnections.Count do
+   begin
+     vMOS:=TMyOracleSession(fConnections.Objects[vIdx]);
+     with vMos do
+     begin
+       if CutFileTabFromConnection(pFileTab, vOutFileName) then
+         vMOS.RegisterFileTab(vOutFileName, pFileTab);
+     end;
+   end;
+
+  result := true;
+end;
+function TFrmCodeCompletion.AssignWindowToCurrentConnection(pFileName: String; pFileTab: TTabSheet) : Boolean;
+var
+ vCurrentIdx, vIdx: Integer;
+ vMOS : TMyOracleSession;
+ vFOund : Boolean;
+begin
+   vFound:=False;
+   if fActiveConnection<>'' then
+   begin
+     vCurrentIdx:=fConnections.IndexOf(fActiveConnection);
+     if vCurrentIdx>=0 then
+     begin
+       for vIdx := 0 to fConnections.Count-1 do
+       begin
+         if vIdx<>vCurrentIdx then
+         begin
+           vMOS:=TMyOracleSession(fConnections.Objects[vIdx]);
+           vFound := vMOS.UnregisterFileTab(pFileName, pFileTab);
+           break;
+         end;
+       end;
+     end;
+     if vFound then
+       (fConnections.Objects[vCurrentIdx] as TMyOracleSession).RegisterFileTab(pFileName, pFileTab);
+   end;
+   result := vFound;
+end;
+
 procedure TFrmCodeCompletion.MyConnectionChange(Sender: TObject);
 var
  vConnectStr : String;
-
 begin
 {*}try
     if Sender<>nil then
@@ -1970,10 +2030,10 @@ begin
     if Assigned(dsCompile.Session) then
     begin
       vAs:=dsCompile.Session;
-      WinExec('sqlplusw '+vAs.LogonUsername+'/'+vAs.LogonPassword+
+      WinExec('sqlplus '+vAs.LogonUsername+'/'+vAs.LogonPassword+
        '@'+vAs.LogonDatabase+ ' @'+vTemppath+'buffer.sql', 1)
     end else
-      WinExec('sqlplusw /nolog '+ ' @'+vTemppath+'buffer.sql', 1);
+      WinExec('sqlplus /nolog '+ ' @'+vTemppath+'buffer.sql', 1);
   finally
     if Assigned(vStr) then vStr.Free;
   end;
@@ -2063,6 +2123,11 @@ begin
   end;
 end;
 
+procedure TFrmCodeCompletion.SetShowAllFiles(const Value: Boolean);
+begin
+  FShowAllFiles := Value;
+end;
+
 procedure TFrmCodeCompletion.CycleJumpNextMark(var pMarkIdx: Integer);
 var
  vIdx : Integer;
@@ -2115,9 +2180,6 @@ procedure TFrmCodeCompletion.FindCurrentBlock;
 var
  vFound : Boolean;
  vPrevBlock : TBlockPaint;
-
-
-
 begin
   try
     vPrevBlock.StartBC.Char := BlockPaint.StartBC.Char;
@@ -3032,7 +3094,7 @@ begin
 {*}end;
 end;
 
-procedure TMyOracleSession.UnregisterFileTab(pFileName: String; pFileTab: TTabSheet);
+function TMyOracleSession.UnregisterFileTab(pFileName: String; pFileTab: TTabSheet) : Boolean;
 var
  vIdx : Integer;
 begin
@@ -3040,6 +3102,7 @@ begin
   vIdx := fileTabList.IndexOfObject(pFileTab);
   if vIdx>-1 then
     fileTabList.Delete(vIdx);
+  result := vIdx>-1;
 {*}except
 {*}  raise CException.Create('UnregisterFileTab',0,self);
 {*}end;
