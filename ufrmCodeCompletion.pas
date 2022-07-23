@@ -48,6 +48,7 @@ type
     private
       connectString : String;
       fileTabList : TStringList;
+      fActiveFileTab : TTabSheet;
       FConnectionTab: TTabSheet;
       procedure SetConnectionTab(const Value: TTabSheet);
     public
@@ -55,6 +56,7 @@ type
       destructor  Destroy;override;
       property  ConnectionTab : TTabSheet read FConnectionTab write SetConnectionTab;
       procedure RegisterFileTab(pFileName : String; pFileTab: TTabSheet);
+      procedure SetActivePageTab(pActivePageTab : TTabSheet);
       function UnregisterFileTab(pFileName : String; pFileTab: TTabSheet) : Boolean;
       procedure ShowActiveFileTabs;
   end;
@@ -166,7 +168,7 @@ type
     procedure ExecuteQuery;
     procedure MyConnectionChange(Sender: TObject);
     function AssignWindowToCurrentConnection(pFileName: String; pFileTab: TTabSheet) : Boolean;
-    function CutFileTabFromConnection(pFileTab : TTabSheet; var pOutFileName : String) : Boolean;
+    procedure SetActiveConnectionPageTab(pActivePageTab : TTabSheet);
     procedure MySynEditChange(Sender: TObject);
     constructor Create(AOwner : TComponent; ACb: TControlBar; aConnectButton : TToolButton;
                         aStatusPanel : TStatusPanel; aCompileResults : TPanel;
@@ -1488,24 +1490,22 @@ begin
 {*}end;
 end;
 
-function TFrmCodeCompletion.CutFileTabFromConnection(pFileTab : TTabSheet; var pOutFileName : String) : Boolean;
+procedure TFrmCodeCompletion.SetActiveConnectionPageTab(pActivePageTab : TTabSheet);
 var
- vIdx: Integer;
- vMOS : TMyOracleSession;
- vOutFileName : String;
+ vCurrentIdx : Integer;
 begin
-   for vIdx := 0 to fConnections.Count do
+ try
+   if fActiveConnection<>'' then
    begin
-     vMOS:=TMyOracleSession(fConnections.Objects[vIdx]);
-     with vMos do
-     begin
-       if CutFileTabFromConnection(pFileTab, vOutFileName) then
-         vMOS.RegisterFileTab(vOutFileName, pFileTab);
-     end;
+     vCurrentIdx:=fConnections.IndexOf(fActiveConnection);
+     if vCurrentIdx>=0 then
+       TMyOracleSession(fConnections.Objects[vCurrentIdx]).SetActivePageTab(pActivePageTab);
    end;
-
-  result := true;
+{*}except
+{*}  raise CException.Create('SetActiveConnectionPageIndex',0,self);
+{*}end;
 end;
+
 function TFrmCodeCompletion.AssignWindowToCurrentConnection(pFileName: String; pFileTab: TTabSheet) : Boolean;
 var
  vCurrentIdx, vIdx: Integer;
@@ -3068,6 +3068,11 @@ begin
 {*}end;
 end;
 
+procedure TMyOracleSession.SetActivePageTab(pActivePageTab: TTabSheet);
+begin
+  fActiveFileTab:=pActivePageTab;
+end;
+
 procedure TMyOracleSession.SetConnectionTab(const Value: TTabSheet);
 begin
   FConnectionTab := Value;
@@ -3082,12 +3087,14 @@ begin
     frmTinnMain.pgFiles.Pages[vIdx].TabVisible:=False;
 
   for vIdx := 0 to fileTabList.Count-1 do
+  begin
     (fileTabList.Objects[vIdx] as TTabSheet).TabVisible:=True;
+    if fileTabList.Objects[vIdx] = fActiveFileTab then
+      (fileTabList.Objects[vIdx] as TTabSheet).PageControl.ActivePage:=fActiveFileTab;
+  end;
 
-//  frmTinnMain.WindowHideAll(fileTabList.Count=0);
-
+  frmTinnMain.WindowHideAll(fileTabList.Count=0);
   Application.ProcessMessages;
-
   frmTinnMain.pgFilesChange(nil);
 {*}except
 {*}  raise CException.Create('ShowActiveFileTabs',0,self);

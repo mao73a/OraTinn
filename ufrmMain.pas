@@ -36,7 +36,7 @@ var
 
 type
 
-  TMyPageControl = class(TPageControl)//class helper for TPageControl
+  TMyPageControl = class helper for TPageControl //class(TPageControl)//
     private
       procedure SetActivePage(const Value: TTabSheet);
       function  GetActivePage : TTabSheet;
@@ -273,6 +273,7 @@ type
     Assignwindowtocurrent1: TMenuItem;
     aAssignAllWindowsHere: TAction;
     Assignallwindowshere1: TMenuItem;
+    panelHideAll: TPanel;
     procedure WindowArrange1Execute(Sender: TObject);
     procedure WindowCascade1Execute(Sender: TObject);
     procedure WindowMinimizeAll1Execute(Sender: TObject);
@@ -674,7 +675,7 @@ begin
     boolFileExists := false;
     if Assigned(pgFiles.ActivePage) then
     begin
-      if pgFiles.PageCount > 0 then
+      if (pgFiles.PageCount > 0)  then
         boolFileExists := FileExists(pgFiles.ActivePage.Hint);
       if Not(boolFileExists) and (ExecRegExpr('Untitled[1-9]+$', pgFiles.ActivePage.Caption))  then
       begin
@@ -737,12 +738,11 @@ end;
 
 procedure TfrmTinnMain.WindowHideAll(pHide : Boolean);
 begin
-{  EditorPanel.Visible:=pHide;
+  panelHideAll.Visible:=pHide;
   if pHide then
-    EditorPanel.BringToFront
+    panelHideAll.BringToFront
   else
-    EditorPanel.SendToBack;
-}
+    panelHideAll.SendToBack;
 end;
 
 procedure TfrmTinnMain.WindowTileVertical1Execute(Sender: TObject);
@@ -784,7 +784,7 @@ procedure TfrmTinnMain.tbSaveClick(Sender: TObject);
 var
  i : integer;
 begin
-	if (pgFiles.PageCount > 0) then
+	if (pgFiles.PageCount > 0) and Assigned(pgFiles.ActivePage) then
   begin
  		i := FindTopWindow;
  		(Self.MDIChildren[i] as tfrmEditor).FileSaveCmdExecute(Sender);
@@ -1984,7 +1984,7 @@ procedure TfrmTinnMain.aDuplicateLineExecute(Sender: TObject);
 var
  i : integer;
 begin
-	if (pgFiles.PageCount > 0) then
+	if (pgFiles.PageCount > 0) and Assigned(pgFiles.ActivePage) then
   begin
  		i := FindTopWindow;
  		(Self.MDIChildren[i] as tfrmEditor).DuplicateLineExecute(Sender);
@@ -2086,7 +2086,7 @@ var
   ChildID : integer;
   tmpActivePage : integer;
 begin
-	if pgFiles.PageCount > 0 then
+	if (pgFiles.PageCount > 0) and Assigned(pgFiles.ActivePage)then
   begin
   	// Get the starting window ID
   	tmpActivePage := pgFiles.ActivePageIndex;
@@ -2199,7 +2199,7 @@ end;
 
 procedure TfrmTinnMain.SetTabTitle(iStat : string);
 begin
-	if pgFiles.PageCount > 0 then
+	if (pgFiles.PageCount > 0) and Assigned(pgFiles.ActivePage) then
   begin
 		if (miToggleReadOnly.Checked) then
   		pgFiles.ActivePage.Caption := '<' + StripPath(pgFiles.ActivePage.Hint) + iStat + '>'
@@ -3394,6 +3394,7 @@ begin
   if Assigned(pgConnections.ActivePage) then
   begin
     tmpstr := pgConnections.ActivePage.Hint;
+    frmExplorer.SetActiveConnectionPageTab(pgFiles.ActivePage);
     frmExplorer.SetActiveConnection(tmpstr);
   end;
 end;
@@ -3634,7 +3635,7 @@ procedure TfrmTinnMain.aMoveBlockDownExecute(Sender: TObject);
 var
  i : integer;
 begin
-	if (pgFiles.PageCount > 0) then
+	if (pgFiles.PageCount > 0) and Assigned(pgFiles.ActivePage) then
   begin
  		i := FindTopWindow;
  		(Self.MDIChildren[i] as tfrmEditor).MoveBlockExecute(Sender);

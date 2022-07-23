@@ -535,8 +535,6 @@ object frmTinnMain: TfrmTinnMain
     OnDockDrop = panProjectDockSiteDockDrop
     OnGetSiteInfo = panProjectDockSiteGetSiteInfo
     OnUnDock = panProjectDockSiteUnDock
-    ExplicitLeft = 0
-    ExplicitHeight = 576
   end
   object pgConnections: TPageControl
     Left = 0
@@ -559,6 +557,18 @@ object frmTinnMain: TfrmTinnMain
     OnDragDrop = pgConnectionsDragDrop
     OnDragOver = pgConnectionsDragOver
     OnMouseDown = pgConnectionsMouseDown
+  end
+  object panelHideAll: TPanel
+    Left = 33
+    Top = 53
+    Width = 1114
+    Height = 602
+    Align = alClient
+    BevelOuter = bvNone
+    TabOrder = 6
+    ExplicitLeft = 962
+    ExplicitWidth = 602
+    ExplicitHeight = 185
   end
   object alStandard: TActionList
     Left = 16
