@@ -163,7 +163,8 @@ type
     BlockPaint : TBlockPaint;
     fHighilightWordArr : THighilightWordArr;
     fHighlightWord : String;
-    procedure Load(pName, pType : String);    
+    procedure Load(pName, pType : String);
+    function GetConnectionFolderName : String;
     procedure Compile;
     procedure ExecuteQuery;
     procedure MyConnectionChange(Sender: TObject);
@@ -1754,12 +1755,28 @@ begin
 {*}end;
 end;
 
+
+function TFrmCodeCompletion.GetConnectionFolderName : String;
+var
+ vPos: Integer;
+ vMOS : TMyOracleSession;
+begin
+  result := '';
+  vPos:=fConnections.IndexOf(fActiveConnection);
+  if vPos<>-1 then
+  begin
+    vMOS:=TMyOracleSession(fConnections.Objects[vPos]);
+    result := vMOS.LogonUsername+'_'+vMos.LogonDatabase;
+  end;
+end;
+
 procedure TFrmCodeCompletion.Load(pName, pType : String);
 var
   sl : TStringList;
   vExt : String;
   vTemppath : array[0..255] of char;
   vFirst, vSlash : Boolean;
+  vPath : String;
 begin
 {*}try
     Screen.Cursor:=crHourglass;
@@ -1828,10 +1845,12 @@ begin
       else
         vExt:='.BDY';
       GetTempPath(255,vTemppath);
-      sl.SaveToFile(vTemppath+UpperCase(pName)+vExt);
+      ForceDirectories(vTemppath+'OraTinn\'+GetConnectionFolderName);
+      vPath:=vTemppath+'OraTinn\'+GetConnectionFolderName+'\'+UpperCase(pName)+vExt;
+      sl.SaveToFile(vPath);
       frmTinnMain.denyUpdateMRU:=True;
-      frmTinnMain.OpenFileIntoTinn(vTemppath+UpperCase(pName)+vExt);
-      DeleteFile(vTemppath+UpperCase(pName)+vExt);
+      frmTinnMain.OpenFileIntoTinn(vPath);
+      DeleteFile(vPath);
     finally
      sl.Free;
      frmTinnMain.denyUpdateMRU:=False;
