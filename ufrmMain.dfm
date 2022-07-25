@@ -557,6 +557,7 @@ object frmTinnMain: TfrmTinnMain
     OnDragDrop = pgConnectionsDragDrop
     OnDragOver = pgConnectionsDragOver
     OnMouseDown = pgConnectionsMouseDown
+    OnMouseUp = pgConnectionsMouseUp
   end
   object panelHideAll: TPanel
     Left = 33
@@ -566,6 +567,7 @@ object frmTinnMain: TfrmTinnMain
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 6
+    Visible = False
   end
   object alStandard: TActionList
     Left = 16

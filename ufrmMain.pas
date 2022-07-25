@@ -387,6 +387,7 @@ type
     procedure pgConnectionsDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure pgConnectionsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     function FindTabUnderMouse(pPageControl : TPageControl; X, Y: Integer) : TTabSheet;
+    procedure pgConnectionsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
   private
     { Private declarations }
 
@@ -1994,9 +1995,19 @@ begin
 end;
 
 procedure TfrmTinnMain.AdvToolButton1Click(Sender: TObject);
+var
+ vOldWidth : Integer;
 begin
-   	pgFiles.ActivePage.Caption := 'aaaaaaaa';
-    pgFiles.ActivePage.hint := 'qqqqq';
+SynMR.Editor.ScrollBars:=ssNone;
+SynMR.Editor.ScrollBars:=ssBoth;
+SynMR.Editor.Invalidate;
+pgFilesChange(Self);
+  PostMessage(self.Handle, WM_SIZING, 0, 0);
+  vOldWidth:=WIdth;
+  Width:=vOldWidth+1;
+  Application.ProcessMEssages;
+  Width:=vOldWidth;
+//SynMR.Editor.Visible:=not SynMR.Editor.Visible;
 end;
 
 procedure TfrmTinnMain.actTsButtonsExecute(Sender: TObject);
@@ -3393,14 +3404,18 @@ end;
 procedure TfrmTinnMain.pgConnectionsChange(Sender: TObject);
 var
   tmpstr : String;
-  vI: Integer;
+  vOldWidth: Integer;
 begin
   if Assigned(pgConnections.ActivePage) then
   begin
     tmpstr := pgConnections.ActivePage.Hint;
     frmExplorer.SetActiveConnectionPageTab(pgFiles.ActivePage);
     frmExplorer.SetActiveConnection(tmpstr);
-  end;
+    pgConnections.EndDrag(False);
+    vOldWidth:=Width;
+    Width:=vOldWidth+1;//wymuszam odmalowania scrollbarów bo cos nie tegez
+    Width:=vOldWidth;
+ end;
 end;
 
 function TfrmTinnMain.FindTabUnderMouse(pPageControl : TPageControl; X, Y: Integer) : TTabSheet;
@@ -3479,6 +3494,11 @@ begin
   except
     raise CException.Create('pgConnectionsMouseDown',0,self);
   end;
+end;
+
+procedure TfrmTinnMain.pgConnectionsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+//  pgConnections.EndDrag(False);
 end;
 
 procedure TfrmTinnMain.actConnectExecute(Sender: TObject);
