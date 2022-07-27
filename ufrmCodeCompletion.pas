@@ -51,10 +51,11 @@ type
       fActiveFileTab : TTabSheet;
       FConnectionTab: TTabSheet;
       procedure SetConnectionTab(const Value: TTabSheet);
+      function GetConnectionTab :TTabSheet;
     public
       constructor Create(AOwner: TComponent; pConnectString : String);overload;
       destructor  Destroy;override;
-      property  ConnectionTab : TTabSheet read FConnectionTab write SetConnectionTab;
+      property  ConnectionTab : TTabSheet read GetConnectionTab write SetConnectionTab;
       procedure RegisterFileTab(pFileName : String; pFileTab: TTabSheet);
       procedure SetActivePageTab(pActivePageTab : TTabSheet);
       function UnregisterFileTab(pFileName : String; pFileTab: TTabSheet) : Boolean;
@@ -1542,7 +1543,8 @@ begin
          begin
            vMOS:=TMyOracleSession(fConnections.Objects[vIdx]);
            vFound := vMOS.UnregisterFileTab(pFileName, pFileTab);
-           break;
+           if vFound then
+             break;
          end;
        end;
      end;
@@ -1749,7 +1751,8 @@ begin
     end;
     if Assigned(dsCompile) then
       dsCompile.Close;
-    MyConnectionChange(nil);
+//    MyConnectionChange(nil);
+    LoadObjectsList;
 {*}except
 {*}  raise CException.Create('Compile',0,self);
 {*}end;
@@ -3097,6 +3100,11 @@ begin
   fileTabList.Free;
   fileTabList:=nil;
   connectString:='';
+end;
+
+function TMyOracleSession.GetConnectionTab: TTabSheet;
+begin
+  result := FConnectionTab;
 end;
 
 procedure TMyOracleSession.RegisterFileTab(pFileName: String; pFileTab: TTabSheet);

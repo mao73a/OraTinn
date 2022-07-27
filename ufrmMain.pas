@@ -263,7 +263,6 @@ type
     aMoveBlockDown: TAction;
     Copyinipath1: TMenuItem;
     pgConnections: TPageControl;
-    AdvToolButton1: TAdvToolButton;
     aShowAllFiles: TAction;
     N11: TMenuItem;
     N12: TMenuItem;
@@ -379,6 +378,7 @@ type
     procedure aMoveBlockDownExecute(Sender: TObject);
     procedure Copyinipath1Click(Sender: TObject);
     procedure pgConnectionsChange(Sender: TObject);
+    procedure RecalcScrollbars;
     procedure WindowHideAll(pHide : Boolean);
     procedure AdvToolButton1Click(Sender: TObject);
     procedure aShowAllFilesExecute(Sender: TObject);
@@ -1996,18 +1996,10 @@ end;
 
 procedure TfrmTinnMain.AdvToolButton1Click(Sender: TObject);
 var
- vOldWidth : Integer;
+ i: Integer;
 begin
-SynMR.Editor.ScrollBars:=ssNone;
-SynMR.Editor.ScrollBars:=ssBoth;
-SynMR.Editor.Invalidate;
-pgFilesChange(Self);
-  PostMessage(self.Handle, WM_SIZING, 0, 0);
-  vOldWidth:=WIdth;
-  Width:=vOldWidth+1;
-  Application.ProcessMEssages;
-  Width:=vOldWidth;
-//SynMR.Editor.Visible:=not SynMR.Editor.Visible;
+RecalcScrollbars;
+
 end;
 
 procedure TfrmTinnMain.actTsButtonsExecute(Sender: TObject);
@@ -3400,11 +3392,22 @@ begin
 
 end;
 
+procedure TfrmTinnMain.RecalcScrollbars;
+var
+  vOldWidth: Integer;
+  tmpstr : String;
+  i : Integer;
+begin
+    vOldWidth:=Width;
+//    Width:=vOldWidth+1;//wymuszam odmalowania scrollbarów bo cos nie tegez
+    Width:=vOldWidth;
+//pgFilesChange(Self);
+
+end;
 
 procedure TfrmTinnMain.pgConnectionsChange(Sender: TObject);
 var
   tmpstr : String;
-  vOldWidth: Integer;
 begin
   if Assigned(pgConnections.ActivePage) then
   begin
@@ -3412,9 +3415,7 @@ begin
     frmExplorer.SetActiveConnectionPageTab(pgFiles.ActivePage);
     frmExplorer.SetActiveConnection(tmpstr);
     pgConnections.EndDrag(False);
-    vOldWidth:=Width;
-    Width:=vOldWidth+1;//wymuszam odmalowania scrollbarów bo cos nie tegez
-    Width:=vOldWidth;
+    RecalcScrollbars;
  end;
 end;
 
