@@ -272,6 +272,7 @@ type
     aAssignAllWindowsHere: TAction;
     Assignallwindowshere1: TMenuItem;
     panelHideAll: TPanel;
+    AdvToolButton1: TAdvToolButton;
     procedure WindowArrange1Execute(Sender: TObject);
     procedure WindowCascade1Execute(Sender: TObject);
     procedure WindowMinimizeAll1Execute(Sender: TObject);
@@ -1995,10 +1996,9 @@ begin
 end;
 
 procedure TfrmTinnMain.AdvToolButton1Click(Sender: TObject);
-var
- i: Integer;
 begin
-RecalcScrollbars;
+//    ActiveControl:=edRegEx;
+frmExplorer.SetJumpObjFocus;
 
 end;
 

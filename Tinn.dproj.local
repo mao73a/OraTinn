@@ -1,8 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>1899-12-30 00:00:00.000.003,C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\Unit1.dfm=C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\ufrmRefactorVariableRename.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.003,C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\ufrmRefactorVariableRename.pas=C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\Unit1.pas</Transaction>
     <Transaction>1899-12-30 00:00:00.000.401,=C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\Unit1.pas</Transaction>
-    <Transaction>1899-12-30 00:00:00.000.003,C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\Unit1.pas=C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\ufrmRefactorVariableRename.pas</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.003,C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\ufrmRefactorVariableRename.dfm=C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\Unit1.dfm</Transaction>
+    <Transaction>2022-07-28 09:32:10.578,=C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\Unit1.pas</Transaction>
+    <Transaction>2022-07-28 09:33:27.600,=C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\Unit1.pas</Transaction>
+    <Transaction>2022-07-28 09:34:40.295,C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\uSearchListView.pas=C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\Unit1.pas</Transaction>
+    <Transaction>2022-07-28 12:26:36.883,=C:\ustawienia\_workdir\delphi\OraTinn\Tinn\src-svn-projectlocker.com\uFrmJumpObj.pas</Transaction>
   </Transactions>
 </BorlandProject>

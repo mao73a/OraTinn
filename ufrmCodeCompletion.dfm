@@ -2,9 +2,10 @@ object FrmCodeCompletion: TFrmCodeCompletion
   Left = 477
   Top = 350
   Align = alClient
+  BorderStyle = bsNone
   Caption = 'FrmCodeCompletion'
-  ClientHeight = 407
-  ClientWidth = 511
+  ClientHeight = 446
+  ClientWidth = 527
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -19,18 +20,22 @@ object FrmCodeCompletion: TFrmCodeCompletion
   object tsFile: TPageControl
     Left = 0
     Top = 0
-    Width = 511
-    Height = 407
+    Width = 527
+    Height = 446
     ActivePage = TabSheet1
     Align = alClient
     TabOrder = 0
+    ExplicitWidth = 511
+    ExplicitHeight = 407
     object TabSheet1: TTabSheet
       Caption = 'Editor'
+      ExplicitWidth = 503
+      ExplicitHeight = 379
       object tvFunctions: TTreeView
         Left = 0
         Top = 0
-        Width = 503
-        Height = 379
+        Width = 519
+        Height = 418
         Align = alClient
         Ctl3D = True
         Font.Charset = DEFAULT_CHARSET
@@ -49,21 +54,21 @@ object FrmCodeCompletion: TFrmCodeCompletion
         OnChange = tvFunctionsChange
         OnClick = tvFunctionsClick
         OnCustomDrawItem = tvFunctionsCustomDrawItem
+        ExplicitWidth = 503
+        ExplicitHeight = 379
       end
     end
     object tsDB: TTabSheet
       Caption = 'DB'
       ImageIndex = 1
       TabVisible = False
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
+      ExplicitWidth = 503
+      ExplicitHeight = 379
       object tvDb: TTreeView
         Left = 0
         Top = 0
-        Width = 503
-        Height = 379
+        Width = 519
+        Height = 418
         Align = alClient
         HideSelection = False
         Indent = 19
@@ -74,44 +79,46 @@ object FrmCodeCompletion: TFrmCodeCompletion
         TabOrder = 0
         OnChange = tvDbChange
         OnDblClick = tvDbDblClick
+        ExplicitWidth = 503
+        ExplicitHeight = 379
       end
     end
     object TabSheet2: TTabSheet
       Caption = 'TabSheet2'
       ImageIndex = 2
       TabVisible = False
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
+      ExplicitWidth = 503
+      ExplicitHeight = 379
       object Memo1: TMemo
         Left = 0
         Top = 0
-        Width = 503
-        Height = 379
+        Width = 519
+        Height = 418
         Align = alClient
         Lines.Strings = (
           'Memo1')
         TabOrder = 0
+        ExplicitWidth = 503
+        ExplicitHeight = 379
       end
     end
     object TabSheet3: TTabSheet
       Caption = 'TabSheet3'
       ImageIndex = 3
       TabVisible = False
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
+      ExplicitWidth = 503
+      ExplicitHeight = 379
       object Memo2: TMemo
         Left = 0
         Top = 0
-        Width = 503
-        Height = 379
+        Width = 519
+        Height = 418
         Align = alClient
         Lines.Strings = (
           'Memo2')
         TabOrder = 0
+        ExplicitWidth = 503
+        ExplicitHeight = 379
       end
     end
   end
@@ -161,6 +168,9 @@ object FrmCodeCompletion: TFrmCodeCompletion
     end
     object ComplierWarnings2: TMenuItem
       Action = aWarnings
+    end
+    object Search2: TMenuItem
+      Action = aSearch
     end
   end
   object ilDbError: TImageList
@@ -611,6 +621,11 @@ object FrmCodeCompletion: TFrmCodeCompletion
       Caption = 'Complier Warnings'
       ShortCut = 49239
       OnExecute = aWarningsExecute
+    end
+    object aSearch: TAction
+      Caption = 'Search'
+      ShortCut = 16454
+      OnExecute = aSearchExecute
     end
   end
   object OracleQuery1: TOracleQuery

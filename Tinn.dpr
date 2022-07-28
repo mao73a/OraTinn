@@ -42,7 +42,8 @@ uses
   uFrmJumpProc in 'uFrmJumpProc.pas' {JumpProc},
   VDMUnit,
   uPLSQLRefactor in 'uPLSQLRefactor.pas',
-  ufrmRefactorVariableRename in 'ufrmRefactorVariableRename.pas' {FormVariableRefactoringChoice};
+  ufrmRefactorVariableRename in 'ufrmRefactorVariableRename.pas' {FormVariableRefactoringChoice},
+  uFrmJumpObj in 'uFrmJumpObj.pas' {FrmJumpObj};
 
 {$R *.RES}
 
@@ -193,7 +194,6 @@ begin
   Application.Initialize;
   Application.Title := 'Tinn';
   Application.CreateForm(TdmSyn, dmSyn);
-
   if (ParamCount > 0) then
   begin
   	FillFileList(FileList);

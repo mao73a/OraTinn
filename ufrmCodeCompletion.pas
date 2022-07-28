@@ -8,7 +8,7 @@ uses
   ExtCtrls, SynCompletionProposal, ImgList, ToolWin, Db, Menus,
   uFrmCompileErrors, inifiles, uAutoComplete, uPLSQLLExer, SynEditTypes, uQueryGrid,
   ActnList, Oracle, OracleData,
-  RegularExpressions;
+  RegularExpressions, uFrmJumpObj;
 
 const DefaultDelay : Integer=10;
       QUERY_BREAK_AFTER = 1000;
@@ -93,6 +93,8 @@ type
     dsCompile: TOracleDataSet;
     dsDetail: TOracleDataSet;
     TimerLoadOnClick: TTimer;
+    aSearch: TAction;
+    Search2: TMenuItem;
     procedure FormDestroy(Sender: TObject);
     procedure tvFunctionsChange(Sender: TObject; Node: TTreeNode);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -115,6 +117,7 @@ type
     procedure LoadFromFile(pIniFile: TIniFile);
     procedure TimerLoadOnClickTimer(Sender: TObject);
     procedure RefactorChangeName(pOldName, pNewName : String; ALine : Integer);
+    procedure aSearchExecute(Sender: TObject);
   private
     { Private declarations }
     fWorkerThread : TThread;
@@ -146,6 +149,7 @@ type
     TimerLoadOnClick_pPackage : String;
     TimerLoadOnClick_pFunction : String;
     fPackageNameMatchList : TStrings;
+    fFrmJumpObj : TFrmJumpObj;
     FShowAllFiles: Boolean;
     procedure SetEditor(const Value: TCustomSynEdit);
     procedure SetModificationMark;
@@ -156,6 +160,9 @@ type
     function PackageNameMatch(pSQLObjectName,pLogonUsername : String) : Boolean;
     function FastCharIndexToRow(  Index,pPrevLine : Integer; var pPrevChars: integer): Integer;
     procedure SetShowAllFiles(const Value: Boolean);
+    procedure JumpObjOnLoadBDYClick(Sender: TObject);
+    procedure JumpObjOnLoadSPCClick(Sender: TObject);
+    procedure PrepareSearchBox;
 //    fEditor : TCustomSynEdit;
   public
     { Public declarations }
@@ -193,6 +200,7 @@ type
     procedure RegisterFileForActiveConnection(pFileName : String; pFileTab : TTabSheet);
     procedure UnregisterFileFromActiveConnection(pFileName: String; pFileTab: TTabSheet);
     procedure RegisterUnregisteredTabs(pConnection : TMyOracleSession);
+    procedure SetJumpObjFocus;
 
   published
     property Editor : TCustomSynEdit read FEditor write SetEditor;
@@ -915,8 +923,9 @@ begin
         tvFunctions.SortType:=stText;
       end;
     fAutoComplete:=TOraTinnAutoComp.Create(Self,nil,ExtractFilePath(ParamStr(0))+'autocomplete.ini');
-    SynCompletionProposalAll.ShortCut:=16397 //Ctrl+Enter (not aviable from drop down list)
+    SynCompletionProposalAll.ShortCut:=16397; //Ctrl+Enter (not aviable from drop down list)
 
+    fFrmJumpObj := TFrmJumpObj.Create(Self, tvDb);
 
 {*}except
 {*}  raise CException.Create('Create',0,self);
@@ -987,6 +996,9 @@ begin
       fEditor.OnChange:=nil;;
       fEditor:=nil;
     end;
+    fFrmJumpObj.Free;
+    fFrmJumpObj:=nil;
+
 {*}except
 {*}  raise CException.Create('FormDestroy-'+vTrace,0,self);
 {*}end;
@@ -1489,6 +1501,7 @@ begin
       tsDB.Caption:='';
       fspConnection.Text:='';
     end;
+    PrepareSearchBox;
 {*}except
 {*}  raise CException.Create('SetActiveConnection',0,self);
 {*}end;
@@ -1524,6 +1537,48 @@ begin
 {*}  raise CException.Create('SetActiveConnectionPageIndex',0,self);
 {*}end;
 end;
+
+procedure TFrmCodeCompletion.PrepareSearchBox;
+var
+ vNode : TTreeNode;
+ aNodeEnum: TTreeNodesEnumerator;
+begin
+  fFrmJumpObj.OnLoadSPCClick := JumpObjOnLoadSPCClick;
+  fFrmJumpObj.OnLoadBDYClick := JumpObjOnLoadBDYClick;
+  fFrmJumpObj.Flist.Clear;
+  aNodeEnum := tvDB.Items.GetEnumerator;
+  try
+    while aNodeEnum.MoveNext do
+    begin
+      vNode := aNodeEnum.Current;
+      fFrmJumpObj.Flist.Add(vNode.Text+'='+IntToStr(vNode.AbsoluteIndex));
+    end;
+  finally
+    aNodeEnum.Free;
+  end;
+  fFrmJumpObj.Prepare;
+  fFrmJumpObj.Parent:=tvDB.Parent;
+  fFrmJumpObj.Align:=alClient;
+end;
+
+procedure TFrmCodeCompletion.aSearchExecute(Sender: TObject);
+begin
+  PrepareSearchBox;
+  fFrmJumpObj.Show;
+  SetJumpObjFocus;
+end;
+
+procedure TFrmCodeCompletion.SetJumpObjFocus;
+begin
+// PostMessage(handle,WM_SETFOCUS,0,0);
+// PostMessage(fFrmJumpObj.handle,WM_SETFOCUS,0,0);
+// PostMessage(fFrmJumpObj.edFilter.handle,WM_SETFOCUS,0,0);
+//ActiveControl:=fFrmJumpObj;
+
+//    ActiveControl:=fFrmJumpObj;
+//    ActiveControl:=tsFile;
+end;
+
 
 function TFrmCodeCompletion.AssignWindowToConnection(pConnection : String; pFileName: String; pFileTab: TTabSheet) : Boolean;
 var
@@ -1571,6 +1626,7 @@ begin
       vConnectStr:=fActiveConnection;
 
     SetActiveConnection( vConnectStr);
+
 
 {*}except
 {*}  raise CException.Create('MyConnectionChange',0,self);
@@ -1772,6 +1828,7 @@ begin
     result := vMOS.LogonUsername+'_'+vMos.LogonDatabase;
   end;
 end;
+
 
 procedure TFrmCodeCompletion.Load(pName, pType : String);
 var
@@ -2010,6 +2067,24 @@ begin
 {*}except
 {*}  raise CException.Create('isPackage',0,self);
 {*}end;
+end;
+
+procedure TFrmCodeCompletion.JumpObjOnLoadBDYClick(Sender: TObject);
+var
+ vItemIdx : Integer;
+begin
+  vItemIdx := (Sender as TListView).Tag;
+  tvDB.Select(tvDB.Items[vItemIdx]);
+  LoadBody1Click(Self);
+end;
+
+procedure TFrmCodeCompletion.JumpObjOnLoadSPCClick(Sender: TObject);
+var
+ vItemIdx : Integer;
+begin
+  vItemIdx := (Sender as TListView).Tag;
+  tvDB.Select(tvDB.Items[vItemIdx]);
+  LoadSpc1Click(Self);
 end;
 
 procedure TFrmCodeCompletion.GotoFunction(pPackage, pFunction: String);
@@ -2269,6 +2344,7 @@ begin
     TScanKeywordThread(fWorkerThread).SetHighlightList(FHighlightList);
   end;
 end;
+
 
 function DateTimeDiff(Start, Stop : TDateTime) : String;
 var TimeStamp : TTimeStamp;

@@ -125,6 +125,17 @@ object frmTinnMain: TfrmTinnMain
     DockSite = False
     PopupMenu = pmShowBar
     TabOrder = 0
+    object AdvToolButton1: TAdvToolButton
+      Left = 1087
+      Top = 2
+      Width = 23
+      Height = 22
+      AutoThemeAdapt = False
+      ColorDown = 14210002
+      ColorHot = 13289415
+      OnClick = AdvToolButton1Click
+      Version = '1.6.1.0'
+    end
     object tbFileBar: TToolBar
       Left = 11
       Top = 2
