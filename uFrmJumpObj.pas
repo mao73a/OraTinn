@@ -17,6 +17,7 @@ type
     pmDb: TPopupMenu;
     LoadSpc1: TMenuItem;
     LoadBody1: TMenuItem;
+    SpeedButton1: TSpeedButton;
     procedure sgConnSetFilter(ARows: TStrings; var Accept: Boolean);
     procedure KeyListSelectItem(Sender: TObject; Item: TListItem;
       Selected: Boolean);
@@ -34,10 +35,12 @@ type
     procedure LoadSpc1Click(Sender: TObject);
     procedure LoadBody1Click(Sender: TObject);
     procedure KeyListKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure FormShow(Sender: TObject);
+    procedure KeyListDblClick(Sender: TObject);
+    procedure SpeedButton1Click(Sender: TObject);
   private
     { Private declarations }
     fActive : Boolean;
-    fFilter : String;
     fIniFile : TIniFile;
     fSortedColumn : Integer;
     fSortDirection : Integer;
@@ -45,9 +48,13 @@ type
     fTreeView : TTreeView;
     FOnLoadSPCClick: TNotifyEvent;
     FOnLoadBDYClick: TNotifyEvent;
-    procedure Filter(AFilter:String);
+    FOnDobleClick: TNotifyEvent;
+    FFilter: String;
+    procedure DoFilter(AFilter:String);
     procedure SetOnLoadSPCClick(const Value: TNotifyEvent);
     procedure SetOnLoadBDYClick(const Value: TNotifyEvent);
+    procedure SetOnDobleClick(const Value: TNotifyEvent);
+    procedure SetFilter(const Value: String);
   public
     { Public declarations }
     LineNumber : Integer;
@@ -57,6 +64,10 @@ type
     constructor Create(AOwner: TComponent; pTreeView: TTreeView);
     property OnLoadSPCClick : TNotifyEvent read FOnLoadSPCClick write SetOnLoadSPCClick;
     property OnLoadBDYClick : TNotifyEvent read FOnLoadBDYClick write SetOnLoadBDYClick;
+    property OnDobleClick : TNotifyEvent read FOnDobleClick write SetOnDobleClick;
+    procedure SetFocusOnFilter;
+    function FilterMatch(AFilter, AText:String) : Boolean;
+    property Filter : String read FFilter write SetFilter;
   end;
 
 
@@ -82,16 +93,20 @@ begin
       begin
         vTmpStr := fList[i];
         vTmpPos := pos('=', vTmpStr);
-        //vTmpStr := copy(vTmpStr, vTmpPos + 1, length(vTmpStr));
-        Item:= KeyList.Items.Add;
-        Item.Caption:=vTmpStr;
         s := copy(vTmpStr,1, vTmpPos - 1);
-        Item.Caption:=s;
-        s := copy(vTmpStr, vTmpPos + 1, 10);
-        Item.SubItems.Add(s);
+        if FilterMatch(edFilter.Text, s) then
+        begin
+          Item:= KeyList.Items.Add;
+          Item.Caption:=vTmpStr;
+          Item.Caption:=s;
+          s := copy(vTmpStr, vTmpPos + 1, 10);
+          Item.SubItems.Add(s);
+        end;
       end;
   finally
-    KeyList.Columns[0].Width:=KeyList.Width-10;
+    KeyList.Columns[0].AutoSize:=False;
+    KeyList.Columns[1].AutoSize:=False;
+    KeyList.Columns[0].Width:=fTreeView.Width-30;
     KeyList.Columns[1].Width:=0;
     KeyList.Items.EndUpdate;
   end;
@@ -100,6 +115,35 @@ begin
 {*}end;
 end;
 
+
+procedure TFrmJumpObj.SetFilter(const Value: String);
+begin
+  FFilter := Value;
+end;
+
+procedure TFrmJumpObj.SetFocusOnFilter;
+var
+ vPoint : TPoint;
+ vOldPoint : TPoint;
+begin
+  try
+    vOldPoint :=  Mouse.CursorPos;
+    vPoint := edFilter.ClientToScreen(Point(10,10));
+    SetCursorPos(vPoint.X,vPoint.Y);
+    mouse_event(MOUSEEVENTF_LEFTDOWN,0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTUP,0, 0, 0, 0);
+    mouse_event(MOUSEEVENTF_LEFTUP,0, 0, 0, 0);
+    keybd_event(VK_END, 0, 0, 0);
+  finally
+    SetCursorPos(vOldPoint.X,vOldPoint.Y);
+  end;
+
+end;
+
+procedure TFrmJumpObj.SetOnDobleClick(const Value: TNotifyEvent);
+begin
+  FOnDobleClick := Value;
+end;
 
 procedure TFrmJumpObj.SetOnLoadBDYClick(const Value: TNotifyEvent);
 begin
@@ -126,6 +170,12 @@ begin
 {*}except
 {*}  raise CException.Create('sgConnSetFilter',0,self);
 {*}end;
+end;
+
+procedure TFrmJumpObj.SpeedButton1Click(Sender: TObject);
+begin
+  edFilter.Text:='';
+  Close;
 end;
 
 procedure TFrmJumpObj.KeyListSelectItem(Sender: TObject; Item: TListItem;
@@ -168,7 +218,7 @@ begin
     if KeyList.Items.Count>0 then
       KeyListSelectItem(Self,KeyList.Items[0], True);
     if edFilter.Text<>'' then
-      Filter(edFilter.Text);
+      DoFilter(edFilter.Text);
 
 {*}except
 {*}  raise CException.Create('FormActivate',0,self);
@@ -209,14 +259,32 @@ end;
 
 
 
+procedure TFrmJumpObj.KeyListDblClick(Sender: TObject);
+begin
+ KeyList.Tag:=fLineNumber;
+ if Assigned(FOnDobleClick) then
+    FOnDobleClick(KeyList);
+end;
+
 procedure TFrmJumpObj.KeyListKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   If (Key = VK_ESCAPE) then begin
     Close;
+  end else If (Key = VK_RETURN) then begin
+    KeyListDblClick(Sender);
   end;
+
 end;
 
-procedure TFrmJumpObj.Filter(AFilter:String);
+function TFrmJumpObj.FilterMatch(AFilter, AText:String) : Boolean;
+begin
+  if AFilter='' then
+    result:=true
+  else
+    result := pos(UpperCase(AFilter), UpperCase(AText))<>0;
+end;
+
+procedure TFrmJumpObj.DoFilter(AFilter:String);
 var
  i : Integer;
 begin
@@ -224,10 +292,10 @@ begin
     KeyList.Items.BeginUpdate;
     i:=0;
     while i<KeyList.Items.Count do begin
-     if (pos(UpperCase(AFilter), UpperCase(KeyList.Items[i].Caption))=0) then
-       KeyList.Items[i].Delete
+     if FilterMatch(AFilter, KeyList.Items[i].Caption) then
+       Inc(i)
      else
-       Inc(i);
+       KeyList.Items[i].Delete;
     end;
     KeyList.Items.EndUpdate;
 {*}except
@@ -250,8 +318,8 @@ begin
       KeyList.SortType:=stText;
     end
     else begin
-      ReadIniFile;    
-      Filter(fFilter);
+      ReadIniFile;
+      DoFilter(fFilter);
       if KeyList.Items.Count>0 then
         KeyListSelectItem(Self,KeyList.Items[0], True);
     end;
@@ -275,6 +343,11 @@ begin
   end;
 end;
 
+
+procedure TFrmJumpObj.FormShow(Sender: TObject);
+begin
+  SetFocusOnFilter;
+end;
 
 procedure TFrmJumpObj.edFilterKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);

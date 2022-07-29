@@ -224,7 +224,7 @@ type
     miProjectReopen1: TMenuItem;
     actExecCmd: TAction;
     actToggleWordWrap: TAction;
-    WindowExplorer: TAction;
+    FilterPackages: TAction;
     CC1: TMenuItem;
     OracleToolbar: TToolBar;
     tbCompile: TToolButton;
@@ -389,6 +389,7 @@ type
     procedure pgConnectionsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     function FindTabUnderMouse(pPageControl : TPageControl; X, Y: Integer) : TTabSheet;
     procedure pgConnectionsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure FilterPackagesExecute(Sender: TObject);
   private
     { Private declarations }
 
@@ -576,6 +577,12 @@ begin
 
 end;
 
+
+procedure TfrmTinnMain.FilterPackagesExecute(Sender: TObject);
+begin
+  frmExplorer.tsFile.ActivePage:=frmExplorer.tsDb;
+  frmExplorer.aSearch.Execute;
+end;
 
 procedure TfrmTinnMain.OpenFileIntoTinn(iFile : string; iLineNumberJump : integer = 0);
 // Modifications done by Marco.
@@ -3666,6 +3673,7 @@ begin
   result := (WinInfo.dwStyle and WS_VISIBLE)>0;
 
 end;
+
 
 procedure TfrmTinnMain.aJumpProcedureExecute(Sender: TObject);
 var

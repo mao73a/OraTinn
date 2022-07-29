@@ -56,8 +56,6 @@ object FrmConnect: TFrmConnect
     NumGlyphs = 2
     TabOrder = 1
     OnClick = btOKClick
-    ExplicitLeft = 371
-    ExplicitTop = 320
   end
   object BitBtn2: TBitBtn
     Left = 523
@@ -69,8 +67,6 @@ object FrmConnect: TFrmConnect
     NumGlyphs = 2
     TabOrder = 2
     OnClick = BitBtn2Click
-    ExplicitLeft = 450
-    ExplicitTop = 320
   end
   object edUser: TEdit
     Left = 465
@@ -79,7 +75,6 @@ object FrmConnect: TFrmConnect
     Height = 21
     Anchors = [akTop, akRight]
     TabOrder = 3
-    ExplicitLeft = 392
   end
   object edPass: TEdit
     Left = 465
@@ -89,7 +84,6 @@ object FrmConnect: TFrmConnect
     Anchors = [akTop, akRight]
     PasswordChar = '*'
     TabOrder = 4
-    ExplicitLeft = 392
   end
   object edHost: TEdit
     Left = 465
@@ -98,7 +92,6 @@ object FrmConnect: TFrmConnect
     Height = 21
     Anchors = [akTop, akRight]
     TabOrder = 5
-    ExplicitLeft = 392
   end
   object panelFilter: TPanel
     Left = 17
@@ -121,8 +114,6 @@ object FrmConnect: TFrmConnect
     ShowHint = True
     TabOrder = 6
     Visible = False
-    ExplicitTop = 305
-    ExplicitWidth = 336
   end
   object Panel1: TPanel
     Left = 17
@@ -133,8 +124,6 @@ object FrmConnect: TFrmConnect
     BevelOuter = bvNone
     Caption = 'Panel1'
     TabOrder = 0
-    ExplicitWidth = 337
-    ExplicitHeight = 290
     object KeyList: TListView
       Left = 0
       Top = 0
@@ -168,8 +157,6 @@ object FrmConnect: TFrmConnect
       OnDblClick = KeyListDblClick
       OnKeyPress = sgConnKeyPress
       OnSelectItem = KeyListSelectItem
-      ExplicitWidth = 337
-      ExplicitHeight = 290
     end
   end
 end

@@ -118,6 +118,7 @@ type
     procedure TimerLoadOnClickTimer(Sender: TObject);
     procedure RefactorChangeName(pOldName, pNewName : String; ALine : Integer);
     procedure aSearchExecute(Sender: TObject);
+    procedure tvDbKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
     { Private declarations }
     fWorkerThread : TThread;
@@ -163,6 +164,7 @@ type
     procedure JumpObjOnLoadBDYClick(Sender: TObject);
     procedure JumpObjOnLoadSPCClick(Sender: TObject);
     procedure PrepareSearchBox;
+    procedure JumpObjOnDobleClick(Sender: TObject);
 //    fEditor : TCustomSynEdit;
   public
     { Public declarations }
@@ -1538,6 +1540,16 @@ begin
 {*}end;
 end;
 
+procedure TFrmCodeCompletion.JumpObjOnDobleClick(Sender: TObject);
+var
+ vItemIdx : Integer;
+begin
+  vItemIdx := (Sender as TListView).Tag;
+  tvDB.Select(tvDB.Items[vItemIdx]);
+  tvDbDblClick(Sender);
+end;
+
+
 procedure TFrmCodeCompletion.PrepareSearchBox;
 var
  vNode : TTreeNode;
@@ -1545,20 +1557,23 @@ var
 begin
   fFrmJumpObj.OnLoadSPCClick := JumpObjOnLoadSPCClick;
   fFrmJumpObj.OnLoadBDYClick := JumpObjOnLoadBDYClick;
+  fFrmJumpObj.OnDobleClick   := JumpObjOnDobleClick;
   fFrmJumpObj.Flist.Clear;
   aNodeEnum := tvDB.Items.GetEnumerator;
   try
     while aNodeEnum.MoveNext do
     begin
       vNode := aNodeEnum.Current;
-      fFrmJumpObj.Flist.Add(vNode.Text+'='+IntToStr(vNode.AbsoluteIndex));
+      if vNode.Level>0 then
+        fFrmJumpObj.Flist.Add(vNode.Text+'='+IntToStr(vNode.AbsoluteIndex));
     end;
   finally
     aNodeEnum.Free;
   end;
-  fFrmJumpObj.Prepare;
   fFrmJumpObj.Parent:=tvDB.Parent;
   fFrmJumpObj.Align:=alClient;
+  fFrmJumpObj.Prepare;
+
 end;
 
 procedure TFrmCodeCompletion.aSearchExecute(Sender: TObject);
@@ -1577,6 +1592,7 @@ begin
 
 //    ActiveControl:=fFrmJumpObj;
 //    ActiveControl:=tsFile;
+  fFrmJumpObj.SetFocusOnFilter;
 end;
 
 
@@ -2964,6 +2980,17 @@ begin
     end;
 end;
 
+
+procedure TFrmCodeCompletion.tvDbKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+begin
+  If (Key <> VK_F3) and (Key <> VK_F4)  then begin
+    PostMessage(fFrmJumpObj.edFilter.Handle, WM_KEYDOWN, Key, 0);
+//    PostMessage(fFrmJumpObj.edFilter.Handle, WM_KEYUP, Key, 0);
+    aSearch.Execute;
+
+ //   fFrmJumpObj.Filter:=
+  end;
+end;
 
 procedure TFrmCodeCompletion.aWarningsExecute(Sender: TObject);
 begin

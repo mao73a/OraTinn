@@ -133,6 +133,7 @@ object frmTinnMain: TfrmTinnMain
       AutoThemeAdapt = False
       ColorDown = 14210002
       ColorHot = 13289415
+      Visible = False
       OnClick = AdvToolButton1Click
       Version = '1.6.1.0'
     end
@@ -597,11 +598,11 @@ object frmTinnMain: TfrmTinnMain
       Caption = '&Tile Vertically'
       OnExecute = WindowTileVertical1Execute
     end
-    object WindowExplorer: TAction
+    object FilterPackages: TAction
       Category = 'Window'
       Caption = 'WindowExplorer'
       ShortCut = 16453
-      OnExecute = WindowExplorerExecute
+      OnExecute = FilterPackagesExecute
     end
   end
   object SaveDialog: TSaveDialog
@@ -2358,7 +2359,7 @@ object frmTinnMain: TfrmTinnMain
         Caption = '-'
       end
       object CC1: TMenuItem
-        Action = WindowExplorer
+        Action = FilterPackages
       end
       object Free1: TMenuItem
         Caption = 'Free'

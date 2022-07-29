@@ -25,12 +25,8 @@ object FrmCodeCompletion: TFrmCodeCompletion
     ActivePage = TabSheet1
     Align = alClient
     TabOrder = 0
-    ExplicitWidth = 511
-    ExplicitHeight = 407
     object TabSheet1: TTabSheet
       Caption = 'Editor'
-      ExplicitWidth = 503
-      ExplicitHeight = 379
       object tvFunctions: TTreeView
         Left = 0
         Top = 0
@@ -54,16 +50,12 @@ object FrmCodeCompletion: TFrmCodeCompletion
         OnChange = tvFunctionsChange
         OnClick = tvFunctionsClick
         OnCustomDrawItem = tvFunctionsCustomDrawItem
-        ExplicitWidth = 503
-        ExplicitHeight = 379
       end
     end
     object tsDB: TTabSheet
       Caption = 'DB'
       ImageIndex = 1
       TabVisible = False
-      ExplicitWidth = 503
-      ExplicitHeight = 379
       object tvDb: TTreeView
         Left = 0
         Top = 0
@@ -79,16 +71,13 @@ object FrmCodeCompletion: TFrmCodeCompletion
         TabOrder = 0
         OnChange = tvDbChange
         OnDblClick = tvDbDblClick
-        ExplicitWidth = 503
-        ExplicitHeight = 379
+        OnKeyDown = tvDbKeyDown
       end
     end
     object TabSheet2: TTabSheet
       Caption = 'TabSheet2'
       ImageIndex = 2
       TabVisible = False
-      ExplicitWidth = 503
-      ExplicitHeight = 379
       object Memo1: TMemo
         Left = 0
         Top = 0
@@ -98,16 +87,12 @@ object FrmCodeCompletion: TFrmCodeCompletion
         Lines.Strings = (
           'Memo1')
         TabOrder = 0
-        ExplicitWidth = 503
-        ExplicitHeight = 379
       end
     end
     object TabSheet3: TTabSheet
       Caption = 'TabSheet3'
       ImageIndex = 3
       TabVisible = False
-      ExplicitWidth = 503
-      ExplicitHeight = 379
       object Memo2: TMemo
         Left = 0
         Top = 0
@@ -117,8 +102,6 @@ object FrmCodeCompletion: TFrmCodeCompletion
         Lines.Strings = (
           'Memo2')
         TabOrder = 0
-        ExplicitWidth = 503
-        ExplicitHeight = 379
       end
     end
   end
