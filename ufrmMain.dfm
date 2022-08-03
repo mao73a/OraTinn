@@ -551,13 +551,13 @@ object frmTinnMain: TfrmTinnMain
     HotTrack = True
     MultiLine = True
     ParentFont = False
+    PopupMenu = PopupMenuConnectionTab
     TabOrder = 5
     TabPosition = tpLeft
     Visible = False
     OnChange = pgConnectionsChange
     OnDragDrop = pgConnectionsDragDrop
     OnDragOver = pgConnectionsDragOver
-    OnMouseDown = pgConnectionsMouseDown
     OnMouseUp = pgConnectionsMouseUp
   end
   object panelHideAll: TPanel
@@ -2873,7 +2873,7 @@ object frmTinnMain: TfrmTinnMain
       OnExecute = actSQLPlusExecute
     end
     object actDisconnect: TAction
-      Caption = 'actDisconnect'
+      Caption = 'Close connection'
       ImageIndex = 3
       OnExecute = actDisconnectExecute
     end
@@ -2929,5 +2929,16 @@ object frmTinnMain: TfrmTinnMain
     UseExtendedStrings = False
     Left = 520
     Top = 216
+  end
+  object PopupMenuConnectionTab: TPopupMenu
+    Left = 40
+    Top = 336
+    object C1: TMenuItem
+      Action = actDisconnect
+    end
+    object Movetab1: TMenuItem
+      Caption = 'Move tab'
+      OnClick = Movetab1Click
+    end
   end
 end

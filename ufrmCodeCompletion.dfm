@@ -50,6 +50,8 @@ object FrmCodeCompletion: TFrmCodeCompletion
         OnChange = tvFunctionsChange
         OnClick = tvFunctionsClick
         OnCustomDrawItem = tvFunctionsCustomDrawItem
+        ExplicitLeft = 3
+        ExplicitTop = -3
       end
     end
     object tsDB: TTabSheet

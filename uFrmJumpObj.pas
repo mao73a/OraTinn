@@ -352,7 +352,7 @@ end;
 procedure TFrmJumpObj.edFilterKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
-  If (Key = VK_DOWN) or (Key = VK_UP) then begin
+  If (Key = VK_DOWN) or (Key = VK_UP) or (Key = VK_RETURN) then begin
     PostMessage(KeyList.Handle, WM_KEYDOWN, Key, 0);
   end;
   If (Key = VK_ESCAPE) then begin
@@ -363,7 +363,7 @@ end;
 procedure TFrmJumpObj.edFilterKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
-  If (Key = VK_DOWN)  or (Key = VK_UP) then begin
+  If (Key = VK_DOWN)  or (Key = VK_UP) or (Key = VK_RETURN) then begin
     PostMessage(KeyList.Handle, WM_KEYUP, Key, 0);
   end;
 end;

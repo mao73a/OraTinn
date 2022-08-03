@@ -1489,7 +1489,11 @@ begin
       vMOS.ConnectionTab.PageControl.ActivePage := vMOS.ConnectionTab;
       vMOS.ConnectionTab.PageControl.Visible := vMOS.ConnectionTab.PageControl.PageCount>1;
       if not ShowAllFiles then
+      begin
         vMOS.ShowActiveFileTabs;
+        Application.ProcessMessages;
+      end;
+
       tsDB.TabVisible:=True;
       tsDB.Caption:=pConnectString;
       LoadObjectsList;

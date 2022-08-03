@@ -273,6 +273,9 @@ type
     Assignallwindowshere1: TMenuItem;
     panelHideAll: TPanel;
     AdvToolButton1: TAdvToolButton;
+    PopupMenuConnectionTab: TPopupMenu;
+    C1: TMenuItem;
+    Movetab1: TMenuItem;
     procedure WindowArrange1Execute(Sender: TObject);
     procedure WindowCascade1Execute(Sender: TObject);
     procedure WindowMinimizeAll1Execute(Sender: TObject);
@@ -386,10 +389,10 @@ type
     procedure aAssignThisWindowHereExecute(Sender: TObject);
     procedure pgConnectionsDragOver(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean);
     procedure pgConnectionsDragDrop(Sender, Source: TObject; X, Y: Integer);
-    procedure pgConnectionsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     function FindTabUnderMouse(pPageControl : TPageControl; X, Y: Integer) : TTabSheet;
     procedure pgConnectionsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure FilterPackagesExecute(Sender: TObject);
+    procedure Movetab1Click(Sender: TObject);
   private
     { Private declarations }
 
@@ -3399,6 +3402,16 @@ begin
 
 end;
 
+procedure TfrmTinnMain.Movetab1Click(Sender: TObject);
+begin
+  try
+    pgConnections.BeginDrag(False);
+    fDraggedTabSheet:=pgConnections.ActivePage;
+  except
+    raise CException.Create('Movetab1Click',0,self);
+  end;
+end;
+
 procedure TfrmTinnMain.RecalcScrollbars;
 var
   vOldWidth: Integer;
@@ -3491,16 +3504,6 @@ begin
       Accept := True;
   except
     raise CException.Create('pgConnectionsDragOver',0,self);
-  end;
-end;
-
-procedure TfrmTinnMain.pgConnectionsMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-begin
-  try
-    pgConnections.BeginDrag(False);
-    fDraggedTabSheet:=pgConnections.ActivePage;
-  except
-    raise CException.Create('pgConnectionsMouseDown',0,self);
   end;
 end;
 
