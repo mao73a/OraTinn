@@ -960,6 +960,7 @@ var
  tmpStr : string;
  vTabSheet : TTabSheet;
 begin
+  vTabSheet:=nil;
   if CreateNewChild then
   begin
     WindowHideAll(False);
@@ -1003,6 +1004,11 @@ begin
     SetTitle;
    end;
    tmpStr := StringReplace(iFileName,'&','&&', [rfReplaceAll]);
+
+   if not Assigned(vTabSheet) then
+     vTabSheet := pgFiles.ActivePage;
+   if not Assigned(vTabSheet) then
+     ShowMessage('l=1011 vTabSheet=nil');
 
    pgFiles.Hint := tmpStr;
    vTabSheet.Hint := tmpStr;
