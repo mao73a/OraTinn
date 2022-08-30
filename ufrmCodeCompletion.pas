@@ -1709,6 +1709,9 @@ var
  vObjectName : String;
 begin
 {*}try
+    if not Assigned(dsCompile.Session) then
+      raise Exception.Create('Not connected to Oracle');
+
     if Assigned(fspStatus) then begin
       fspStatus.Text:='Compiling...';
       Refresh;
