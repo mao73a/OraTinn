@@ -60,6 +60,7 @@ type
       procedure SetActivePageTab(pActivePageTab : TTabSheet);
       function UnregisterFileTab(pFileName : String; pFileTab: TTabSheet) : Boolean;
       procedure ShowActiveFileTabs;
+      procedure ShowAllFileTabs;
   end;
 
   TFrmCodeCompletion = class(TForm)
@@ -1445,8 +1446,10 @@ begin
         vConn.ConnectionTab:=vConnectionTab;
       end;
     end;
-    if fConnections.Count=1 then
+    if fConnections.Count=1 then begin
       RegisterUnregisteredTabs(vConn);
+      SetActiveConnectionPageTab(frmTinnMain.pgFiles.ActivePage);
+    end;
     MyConnectionChange(vMI);
     result:=True;
   except
@@ -1489,10 +1492,11 @@ begin
       vMOS.ConnectionTab.PageControl.ActivePage := vMOS.ConnectionTab;
       vMOS.ConnectionTab.PageControl.Visible := vMOS.ConnectionTab.PageControl.PageCount>1;
       if not ShowAllFiles then
-      begin
-        vMOS.ShowActiveFileTabs;
-        Application.ProcessMessages;
-      end;
+        vMOS.ShowActiveFileTabs
+      else
+        vMOS.ShowAllFileTabs;
+
+      Application.ProcessMessages;
 
       tsDB.TabVisible:=True;
       tsDB.Caption:=pConnectString;
@@ -3259,6 +3263,18 @@ begin
 {*}except
 {*}  raise CException.Create('ShowActiveFileTabs',0,self);
 {*}end;
+end;
+
+procedure TMyOracleSession.ShowAllFileTabs;
+var
+  vIdx: Integer;
+begin
+  for vIdx := 0 to frmTinnMain.pgFiles.PageCount-1 do
+    frmTinnMain.pgFiles.Pages[vIdx].TabVisible:=True;
+
+  frmTinnMain.WindowHideAll(False);
+  Application.ProcessMessages;
+  frmTinnMain.pgFilesChange(nil);
 end;
 
 function TMyOracleSession.UnregisterFileTab(pFileName: String; pFileTab: TTabSheet) : Boolean;

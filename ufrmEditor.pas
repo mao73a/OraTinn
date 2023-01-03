@@ -2153,6 +2153,7 @@ begin
      if (vBc.Char<>functionCall.BufferCoord.Char) or
         (vBc.Line<>functionCall.BufferCoord.Line) then
      begin
+
        //find function name and position
        functionCall.Name:=synEditor.GetWordAtRowCol(synEditor.DisplayToBufferPos(vDc));
        functionCall.BufferCoord:=vBc;

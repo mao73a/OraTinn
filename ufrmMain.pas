@@ -3727,8 +3727,8 @@ begin
   begin
     pgFiles.Pages[j].TabVisible:=aShowAllFiles.Checked;
   end;
-  if not aShowAllFiles.Checked then
-    pgConnectionsChange(nil);
+//  if not aShowAllFiles.Checked then
+  pgConnectionsChange(nil);
 end;
 
 procedure TfrmTinnMain.aAssignThisWindowHereExecute(Sender: TObject);
