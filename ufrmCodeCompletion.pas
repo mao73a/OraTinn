@@ -1447,6 +1447,7 @@ begin
       end;
     end;
     if fConnections.Count=1 then begin
+      fActiveConnection:=fConnections[0];
       RegisterUnregisteredTabs(vConn);
       SetActiveConnectionPageTab(frmTinnMain.pgFiles.ActivePage);
     end;
