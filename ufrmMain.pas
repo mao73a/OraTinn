@@ -1935,8 +1935,10 @@ begin
   end
   else
     SynMR.Editor := nil;
-  if Assigned(frmExplorer) then
+  if Assigned(frmExplorer) then  begin
     frmExplorer.Editor := SynMR.Editor;
+    frmExplorer.SetActiveConnectionPageTab(pgFiles.ActivePage);
+  end;
 end;
 
 function TfrmTinnMain.StripPath(iFileName : string) : string;
