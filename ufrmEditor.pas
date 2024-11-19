@@ -153,6 +153,7 @@ type
     RefactorRename1: TMenuItem;
     N15: TMenuItem;
     aMmoveTo: TMenuItem;
+    Blockselect1: TMenuItem;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure Tile1Click(Sender: TObject);
     procedure Cascade1Click(Sender: TObject);
@@ -236,6 +237,7 @@ type
     procedure synEditorScroll(Sender: TObject; ScrollBar: TScrollBarKind);
     procedure Highlight1Click(Sender: TObject);
     procedure RefactorRename1Click(Sender: TObject);
+    procedure Blockselect1Click(Sender: TObject);
 
   private
     { Private declarations }
@@ -2695,6 +2697,12 @@ procedure TfrmEditor.RefactorRename1Click(Sender: TObject);
 begin
    frmTinnMain.RefactorRename(Sender);
 end;
+
+procedure TfrmEditor.Blockselect1Click(Sender: TObject);
+begin
+   frmTinnMain.BlockSelectUp(Sender);
+end;
+
 
 end.
 

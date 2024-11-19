@@ -1,9 +1,9 @@
 object frmEditor: TfrmEditor
-  Left = 286
-  Top = 189
+  Left = 274
+  Top = 154
   Caption = 'frmEditor'
-  ClientHeight = 465
-  ClientWidth = 643
+  ClientHeight = 448
+  ClientWidth = 818
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -14,7 +14,7 @@ object frmEditor: TfrmEditor
   KeyPreview = True
   Menu = MainMenu1
   OldCreateOrder = False
-  Position = poDefault
+  Position = poDesigned
   Visible = True
   OnActivate = FormActivate
   OnClose = FormClose
@@ -27,8 +27,8 @@ object frmEditor: TfrmEditor
   object synEditor: TSynEdit
     Left = 0
     Top = 0
-    Width = 643
-    Height = 465
+    Width = 818
+    Height = 448
     Align = alClient
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -60,6 +60,8 @@ object frmEditor: TfrmEditor
     OnScroll = synEditorScroll
     OnStatusChange = synEditorStatusChange
     OnPaintTransient = synEditorPaintTransient
+    ExplicitWidth = 643
+    ExplicitHeight = 465
   end
   object MainMenu1: TMainMenu
     Images = frmTinnMain.ToolbarImages
@@ -299,6 +301,11 @@ object frmEditor: TfrmEditor
     object RefactorRename1: TMenuItem
       Caption = 'Refactor Rename'
       OnClick = RefactorRename1Click
+    end
+    object Blockselect1: TMenuItem
+      Caption = 'Block select'
+      ShortCut = 49218
+      OnClick = Blockselect1Click
     end
     object N15: TMenuItem
       Caption = '-'

@@ -414,7 +414,9 @@ type
     SearchRegEx : TRegExpr;
     InExecute: Boolean;
     fDraggedTabSheet : TTabSheet;
-
+    fBlockSelectLevel : Integer;
+    fBlockSelectUpLine : Integer;
+    fBlockSelectUpLine_ResetPosition : TBufferCoord;
 
     procedure FindIniFilePath;
     procedure ReadIniFile;
@@ -504,6 +506,7 @@ type
     procedure UpdateProjectMRU(var ioMenuItem : TMenuItem; iFileName : string);
     procedure RecentProjectFileClick(Sender: TObject);
     procedure RefactorRename(Sender: TObject);
+    procedure BlockSelectUp(Sender: TObject);
   end;
 
 var
@@ -961,6 +964,7 @@ var
  vTabSheet : TTabSheet;
 begin
   vTabSheet:=nil;
+  fBlockSelectLevel:=0;
   if CreateNewChild then
   begin
     WindowHideAll(False);
@@ -3758,6 +3762,24 @@ begin
   end;
 end;
 
+
+procedure TfrmTinnMain.BlockSelectUp(Sender: TObject);
+begin
+  if fBlockSelectUpLine<>SynMR.Editor.CaretXY.Line then
+  begin
+    fBlockSelectLevel:=0;
+    fBlockSelectUpLine_ResetPosition:=SynMR.Editor.CaretXY;
+  end;
+  if frmExplorer.BlockSelection(fBlockSelectUpLine_ResetPosition.Line, fBlockSelectLevel) then
+  begin
+    fBlockSelectUpLine:=SynMR.Editor.CaretXY.Line;
+    Inc(fBlockSelectLevel);
+  end
+  else
+  begin
+    frmExplorer.GotoPos(fBlockSelectUpLine_ResetPosition);
+  end;
+end;
 
 { TMyPageControl }
 

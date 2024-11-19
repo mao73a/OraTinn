@@ -120,6 +120,7 @@ type
     procedure RefactorChangeName(pOldName, pNewName : String; ALine : Integer);
     procedure aSearchExecute(Sender: TObject);
     procedure tvDbKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    function BlockSelection(ALine : Integer; var pBlockLevel : Integer) : Boolean;
   private
     { Private declarations }
     fWorkerThread : TThread;
@@ -204,7 +205,7 @@ type
     procedure UnregisterFileFromActiveConnection(pFileName: String; pFileTab: TTabSheet);
     procedure RegisterUnregisteredTabs(pConnection : TMyOracleSession);
     procedure SetJumpObjFocus;
-
+    procedure GotoPos(pos: TBufferCoord);
   published
     property Editor : TCustomSynEdit read FEditor write SetEditor;
     property HighlightList : String read FHighlightList write SetHighlightList;
@@ -1081,8 +1082,8 @@ end;
 
 procedure TFrmCodeCompletion.GetFunctionList(pFunctionList: TStrings);
 var
- b:TBufferCoord;
- s : String;
+ functionNamePos:TBufferCoord;
+ functionName, s : String;
  aHighlighter : TSynSQLSyn;
  vCount : Integer;
 begin
@@ -1094,26 +1095,41 @@ begin
     aHighlighter.ResetRange;
     aHighlighter.SetLine(fEditor.Text, 1);
     vCount:=1;
-    while not aHighlighter.GetEol do
-    begin
-      if (aHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkPLSQL)) then
+    try
+      pFunctionList.BeginUpdate;
+      while not aHighlighter.GetEol do
       begin
-        s := UpperCase(aHighlighter.GetToken);
-        if (s = 'FUNCTION') or (s='PROCEDURE') then
+        if (aHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkPLSQL)) then
         begin
-          aHighlighter.Next;
-          s := aHighlighter.GetToken;
-          while not aHighlighter.GetEol and
-                ((s='') or (pos(' ',s)<>0)) do
+          s := UpperCase(aHighlighter.GetToken);
+          if (s = 'FUNCTION') or (s='PROCEDURE') then
           begin
             aHighlighter.Next;
             s := aHighlighter.GetToken;
+            while not aHighlighter.GetEol and
+                  ((s='') or (pos(' ',s)<>0)) do
+            begin
+              aHighlighter.Next;
+              s := aHighlighter.GetToken;
+            end;
+            functionNamePos:=fEditor.CharIndexToRowCol(aHighlighter.GetTokenPos);
+            functionName:=aHighlighter.GetToken;
+
+
+            while not aHighlighter.GetEol and
+                  ((s<>';') and (s<>'IS')) do
+            begin
+              aHighlighter.Next;
+              s := UpperCase(aHighlighter.GetToken);
+            end;
+            if s='IS' then
+              pFunctionList.Add(functionName+'='+IntToStr(functionNamePos.line));
           end;
-          b:=fEditor.CharIndexToRowCol(aHighlighter.GetTokenPos);
-          pFunctionList.Add(aHighlighter.GetToken+'='+IntToStr(b.line));
         end;
+        aHighlighter.Next;
       end;
-      aHighlighter.Next;
+    finally
+      pFunctionList.EndUpdate;
     end;
     aHighlighter.Free;
 {*}except
@@ -1444,6 +1460,7 @@ begin
         Hint := Caption;
         ShowHint := True;
         vConn.ConnectionTab:=vConnectionTab;
+        SetActiveConnectionPageTab(frmTinnMain.pgFiles.ActivePage);
       end;
     end;
     if fConnections.Count=1 then begin
@@ -2774,8 +2791,9 @@ begin
         if Assigned(fCodeCompletionForm.fEditor) and fCodeCompletionForm.fEditor.Focused then begin
           caretPos:=fCodeCompletionForm.fEditor.CaretXY;
           vWord:=UpperCase(fCodeCompletionForm.fEditor.GetWordAtRowCol(caretPos));
+          s:=StringReplace(s,'<line>',IntToStr(fCodeCompletionForm.fEditor.CaretXY.Line),[rfReplaceAll, rfIgnoreCase]);
+          s:=StringReplace(s,'<word>',vWord,[rfReplaceAll, rfIgnoreCase]);
         end;
-        s:=StringReplace(s,'<word>',vWord,[rfReplaceAll, rfIgnoreCase]);
 
         if (pos('<user>',s)<>0) or (pos('<password>',s)<>0) or (pos('<host>',s)<>0) then begin
           if (fCodeCompletionForm.dsCompile.Session=nil) or
@@ -3105,7 +3123,7 @@ begin
     end;
 
     s:=fPLSRefactor.RemoveUnrecognizedStructures;
-    fPLSRefactor.FindMatichngBlocks(ALine);
+    fPLSRefactor.FindMatchingDeclarationBlocks(ALine);
 
 {    fPLSRefactor.OutputBlocks(s);
     fPLSRefactor.OutputResultBlocks(s1);
@@ -3290,6 +3308,135 @@ begin
 {*}except
 {*}  raise CException.Create('UnregisterFileTab',0,self);
 {*}end;
+end;
+
+
+
+function TFrmCodeCompletion.BlockSelection(ALine : Integer; var pBlockLevel : Integer) : Boolean;
+var
+  fPLSRefactor : TPLSRefactor;
+  fHighlighter: TSynCustomHighlighter;
+
+  vTokenId, vFoundBlockIdx : Integer;
+  vPrevToken, vPrev2Token, s,s1,s2, vNewBlockText, vGetToken : String;
+  vOldNameFound : Boolean;
+  i , vChoosenBlock, startPos, endPos: Integer;
+  p : PPoint;
+  caretPos, vCoord : TBufferCoord;
+  vForm : TFormVariableRefactoringChoice;
+begin
+  fPLSRefactor:=nil;  fHighlighter:=nil;  vPrevToken:='';
+  fPLSRefactor:=TPLSRefactor.Create;
+  fHighlighter := TSynSQLSyn.Create(nil);
+
+  try
+
+    TSynSQLSyn(fHighlighter).SQLDialect := SQLOracle;
+    fHighlighter.ResetRange;
+    fHighlighter.SetLine(fEditor.Text, 1);
+
+    while not fHighlighter.GetEol do
+    begin
+      while (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkSpace)) and (not fHighlighter.GetEol) do
+        fHighlighter.Next;
+      if  fHighlighter.GetEol then
+        break;
+
+      s := fHighlighter.GetToken;
+      s:=UpperCase(s);
+//      if (fHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkPLSQL)) then
+      begin
+        if (s='UPDATE') and (vPrevToken='FOR') then
+          fPLSRefactor.RemoveLastTokenFromStack;
+
+        if (s='FOR') and (vPrev2Token='OPEN') then //pomin
+        else if vPrevToken='$' then //dyrektywy
+        else if fPLSRefactor.CheckToken(s, vTokenId) then begin
+          vCoord:=fEditor.CharIndexToRowCol(fHighlighter.GetTokenPos);
+          if vPrevToken='END' then
+            fPLSRefactor.CloseDoubleEndToken(s,vTokenId, vCoord);
+            fPLSRefactor.PutToken(vTokenId, vCoord,s, fHighlighter.GetTokenPos);
+
+          try
+            fPLSRefactor.NewStructure;
+          except
+          end;
+        end;
+      end;
+      vPrev2Token:=vPrevToken;
+      vPrevToken:=s;
+
+      fHighlighter.Next;
+    end;
+
+    s:=fPLSRefactor.RemoveUnrecognizedStructures;
+    fPLSRefactor.FindMatchingBlocks(ALine);
+
+{    fPLSRefactor.OutputBlocks(s);
+    fPLSRefactor.OutputResultBlocks(s1);
+    fPLSRefactor.OutputStack(s2);
+    Clipboard.AsText := 'Stack size ='+IntToStr(fPLSRefactor.fStackSize)+#13#10+
+      s1+#13#10+'-------------------------------'+#13#10+s+
+      #13#10+s2;
+    ShowMessage(IntToStr(Length(fPLSRefactor.fFoundResultBlocks)));
+ }
+
+    if Length(fPLSRefactor.fFoundResultBlocks)=0 then
+    begin
+      result := False;
+      exit;
+    end;
+
+    if pBlockLevel >= Length(fPLSRefactor.fFoundResultBlocks) then
+       pBlockLevel:=0;
+
+    //zaznacz blok
+    begin
+       fEditor.BeginUpdate;
+       caretPos := fEditor.CaretXY;
+       New(p);
+       try
+         p.X:=1;
+         p.Y:=fPLSRefactor.fFoundResultBlocks[pBlockLevel].startPos.Line;
+         fEditor.ExecuteCommand(ecGotoXY, 'A', p);
+
+         p.X:=999;
+         p.Y:=fPLSRefactor.fFoundResultBlocks[pBlockLevel].endPos.Line;
+         fEditor.ExecuteCommand(ecSelGotoXY, 'A', p);
+
+//         fEditor.ExecuteCommand(ecPaste, 'A', p);
+
+//         p.X:=caretPos.Char;
+//         p.Y:=caretPos.Line;
+//         fEditor.ExecuteCommand(ecGotoXY, 'A', p);
+
+       finally
+         fEditor.EndUpdate;
+         dispose(p);
+       end;
+    end;
+
+    result := pBlockLevel < Length(fPLSRefactor.fFoundResultBlocks)-1;
+  except
+    raise CException.Create('BlockSelection',0,self);
+  end;
+end;
+
+procedure TFrmCodeCompletion.GotoPos(pos: TBufferCoord);
+var
+  p : PPoint;
+begin
+   New(p);
+   try
+     fEditor.BeginUpdate;
+      p.X:=pos.char;
+      p.Y:=pos.line;
+      fEditor.ExecuteCommand(ecGotoXY, 'A', p);
+
+   finally
+     fEditor.EndUpdate;
+     dispose(p);
+   end;
 end;
 
 end.

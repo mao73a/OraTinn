@@ -61,7 +61,8 @@ type
     procedure NewStructure;
     function isEmpty: Boolean;
     function FindCurrentBlock(ALine: Integer; var pBegin, pEnd: Integer): Boolean;
-    function FindMatichngBlocks(ALine: Integer): Integer;
+    function FindMatchingDeclarationBlocks(ALine: Integer): Integer;
+    function FindMatchingBlocks(ALine: Integer): Integer;
 
     procedure Clear;
     procedure CloseDoubleEndToken(var p_token: string; var ptokenId: Integer; p_TokenPos: TBufferCoord);
@@ -454,7 +455,7 @@ begin
 end;
 
 
-function TPLSRefactor.FindMatichngBlocks(ALine: Integer): Integer;
+function TPLSRefactor.FindMatchingDeclarationBlocks(ALine: Integer): Integer;
 var
   i, j: Integer;
 begin
@@ -474,6 +475,29 @@ begin
   end;
   result := j;
 end;
+
+
+function TPLSRefactor.FindMatchingBlocks(ALine: Integer): Integer;
+var
+  i, j: Integer;
+begin
+  if not fFunctionIndexBuilt then
+    BuildIndex;
+  result := -1;
+  //find current function
+  SetLength(fFoundResultBlocks, 0);
+  for i := 0 to Length(fBlocks) - 1 do
+  begin
+    if (ALine >= fBlocks[i].startPos.Line) and (ALine <= fBlocks[i].endPos.Line) then
+    begin
+      j := Length(fFoundResultBlocks);
+      SetLength(fFoundResultBlocks, j + 1);
+      fFoundResultBlocks[j] := fBlocks[i];
+    end;
+  end;
+  result := j;
+end;
+
 
 procedure TPLSRefactor.OutputBlocks(var pOut: string);
 var
