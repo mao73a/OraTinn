@@ -1038,6 +1038,7 @@ var
  s : String;
  aHighlighter : TSynSQLSyn;
  vCount : Integer;
+ vFound : Boolean;
 begin
 {*}try
     fEditor.TopLine:=b.line;
@@ -1046,6 +1047,7 @@ begin
     aHighlighter.ResetRange;
     aHighlighter.SetLine(fEditor.Text, 1);
     vCount:=1;
+    vFound:=True;
     while not aHighlighter.GetEol do
     begin
       if (aHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkPLSQL)) then
@@ -1054,6 +1056,7 @@ begin
         if (s = 'FUNCTION') or (s='PROCEDURE') then
         begin
           aHighlighter.Next;
+          //rewind to FUNCTION keyword
           s := aHighlighter.GetToken;
           while not aHighlighter.GetEol and
                 ((s='') or (pos(' ',s)<>0)) do
@@ -1063,10 +1066,35 @@ begin
           end;
           if (aHighlighter.GetToken=pFunction) then
           begin
-            if (pCount=vCount) then begin
+            if (pCount=vCount) or (pCount=-1) then begin
               b:=fEditor.CharIndexToRowCol(aHighlighter.GetTokenPos);
-              fEditor.TopLine:=b.line;
-              exit;
+
+              //rewind to semicolon or IS (skip function declaratino in package body)
+              if (pCount=-1) then
+              begin
+                  vFound:=False;
+                  s := aHighlighter.GetToken;
+                  while not aHighlighter.GetEol do
+                  begin
+                    aHighlighter.Next;
+                    s := UpperCase(aHighlighter.GetToken);
+                    if (s = 'IS') or (s = 'AS') then
+                    begin
+                      vFound:=True;
+                      break;
+                    end
+                    else if s=';' then
+                    begin
+                      break;
+                    end;
+                  end;
+              end;
+
+              if vFound then
+              begin
+                fEditor.TopLine:=b.line;
+                exit;
+              end;
             end;
             Inc(vCount);            
           end;
@@ -2136,7 +2164,7 @@ procedure TFrmCodeCompletion.GotoFunction(pPackage, pFunction: String);
 begin
 {*}try
    if pPackage='' then
-     ShowFunction(pFunction, 1)
+     ShowFunction(pFunction, -1)
    else
    begin
 //     ActiveControl:=tsFile;
@@ -2154,7 +2182,7 @@ procedure TFrmCodeCompletion.TimerLoadOnClickTimer(Sender: TObject);
 begin
    TimerLoadOnClick.Enabled:=False;
    Load(TimerLoadOnClick_pPackage, 'PACKAGE_BODY');
-   ShowFunction(TimerLoadOnClick_pFunction, 1);
+   ShowFunction(TimerLoadOnClick_pFunction, -1);
 end;
 
 
@@ -3396,12 +3424,12 @@ begin
        caretPos := fEditor.CaretXY;
        New(p);
        try
-         p.X:=1;
-         p.Y:=fPLSRefactor.fFoundResultBlocks[pBlockLevel].startPos.Line;
-         fEditor.ExecuteCommand(ecGotoXY, 'A', p);
-
          p.X:=999;
          p.Y:=fPLSRefactor.fFoundResultBlocks[pBlockLevel].endPos.Line;
+         fEditor.ExecuteCommand(ecGotoXY, 'A', p);
+
+         p.X:=1;
+         p.Y:=fPLSRefactor.fFoundResultBlocks[pBlockLevel].startPos.Line;
          fEditor.ExecuteCommand(ecSelGotoXY, 'A', p);
 
 //         fEditor.ExecuteCommand(ecPaste, 'A', p);
