@@ -56,6 +56,10 @@ object FrmCodeCompletion: TFrmCodeCompletion
       Caption = 'DB'
       ImageIndex = 1
       TabVisible = False
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object tvDb: TTreeView
         Left = 0
         Top = 0
@@ -78,6 +82,10 @@ object FrmCodeCompletion: TFrmCodeCompletion
       Caption = 'TabSheet2'
       ImageIndex = 2
       TabVisible = False
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Memo1: TMemo
         Left = 0
         Top = 0
@@ -93,6 +101,10 @@ object FrmCodeCompletion: TFrmCodeCompletion
       Caption = 'TabSheet3'
       ImageIndex = 3
       TabVisible = False
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Memo2: TMemo
         Left = 0
         Top = 0

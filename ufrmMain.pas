@@ -3698,7 +3698,6 @@ begin
     if not Assigned(frmExplorer) then exit;
     if not Assigned(frmExplorer.Editor) then exit;
     vForm := TFrmJumpProc.Create(Self);
-
     frmExplorer.GetFunctionList(vForm.fList);
 
     vForm.ShowModal;

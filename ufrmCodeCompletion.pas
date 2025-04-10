@@ -1114,6 +1114,7 @@ var
  functionName, s : String;
  aHighlighter : TSynSQLSyn;
  vCount : Integer;
+ loadDeclarations : Boolean;
 begin
 {*}try
     if not Assigned(pFunctionList) then exit;
@@ -1123,6 +1124,7 @@ begin
     aHighlighter.ResetRange;
     aHighlighter.SetLine(fEditor.Text, 1);
     vCount:=1;
+    loadDeclarations:=True;
     try
       pFunctionList.BeginUpdate;
       while not aHighlighter.GetEol do
@@ -1130,6 +1132,8 @@ begin
         if (aHighlighter.GetTokenKind = Ord(SynHighlighterSQL.tkPLSQL)) then
         begin
           s := UpperCase(aHighlighter.GetToken);
+          if s='BODY' then
+            loadDeclarations:=False;
           if (s = 'FUNCTION') or (s='PROCEDURE') then
           begin
             aHighlighter.Next;
@@ -1150,8 +1154,9 @@ begin
               aHighlighter.Next;
               s := UpperCase(aHighlighter.GetToken);
             end;
-            if s='IS' then
+            if (s='IS') or (loadDeclarations and (s=';')) then
               pFunctionList.Add(functionName+'='+IntToStr(functionNamePos.line));
+
           end;
         end;
         aHighlighter.Next;
