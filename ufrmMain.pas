@@ -276,6 +276,8 @@ type
     PopupMenuConnectionTab: TPopupMenu;
     C1: TMenuItem;
     Movetab1: TMenuItem;
+    aIncreaseFontSize: TAction;
+    aDecreaseFontSize: TAction;
     procedure WindowArrange1Execute(Sender: TObject);
     procedure WindowCascade1Execute(Sender: TObject);
     procedure WindowMinimizeAll1Execute(Sender: TObject);
@@ -393,6 +395,8 @@ type
     procedure pgConnectionsMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure FilterPackagesExecute(Sender: TObject);
     procedure Movetab1Click(Sender: TObject);
+    procedure aIncreaseFontSizeExecute(Sender: TObject);
+    procedure aDecreaseFontSizeExecute(Sender: TObject);
   private
     { Private declarations }
 
@@ -434,6 +438,7 @@ type
     function SaveModifiedProjectQuery : boolean;
     procedure ModifyOnCreate;
     procedure HandleException(Sender: TObject; E: Exception);
+    procedure ModifyFontSize(pStep : Integer);
   public
     { Public declarations }
     denyUpdateMRU : Boolean;
@@ -2006,6 +2011,8 @@ begin
   tsStandard1.Checked := true;
 end;
 
+
+
 procedure TfrmTinnMain.aDuplicateLineExecute(Sender: TObject);
 var
  i : integer;
@@ -2285,7 +2292,6 @@ end;
 procedure TfrmTinnMain.actShowEditorOptionsExecute(Sender: TObject);
 var
 	i : integer;
-   qqqEditorOptions : TSynEditorOptionsContainer;
 begin
 
 {
@@ -3689,6 +3695,43 @@ begin
 
 end;
 
+procedure TfrmTinnMain.ModifyFontSize(pStep : Integer);
+var
+ i : Integer;
+begin
+    if (FontSize+pStep)<=0 then
+      exit;
+
+    FontSize := FontSize+pStep;
+    FEditorOptions.Font.Size  := FontSize;
+    if Assigned(frmExplorer) then begin
+      frmExplorer.tvFunctions.Font.Size := frmExplorer.tvFunctions.Font.Size+pStep;
+      frmExplorer.tvDB.Font.Size := frmExplorer.tvDB.Font.Size+pStep;
+    end;
+  	for i := Self.MDIChildCount - 1 downto 0 do
+    begin
+      FEditorOptions.AssignTo((Self.MDIChildren[i] as TfrmEditor).synEditor);
+      //(Self.MDIChildren[i] as TfrmEditor).synEditor.MaxScrollWidth := FLineWidth;
+
+      if ((Self.MDIChildren[i] as TfrmEditor).synEditor2 <> Nil) then
+      begin
+        FEditorOptions.AssignTo((Self.MDIChildren[i] as TfrmEditor).synEditor2);
+        //(Self.MDIChildren[i] as TfrmEditor).synEditor2.MaxScrollWidth := FLineWidth;
+        (Self.MDIChildren[i] as TfrmEditor).synEditor2.RightEdge := FEditorOptions.RightEdge;
+      (Self.MDIChildren[i] as TfrmEditor).synEditor2.RightEdgeColor := FEditorOptions.RightEdgeColor;
+      end;
+    end;
+end;
+
+procedure TfrmTinnMain.aIncreaseFontSizeExecute(Sender: TObject);
+begin
+  ModifyFontSize(+1);
+end;
+
+procedure TfrmTinnMain.aDecreaseFontSizeExecute(Sender: TObject);
+begin
+  ModifyFontSize(-1);
+end;
 
 procedure TfrmTinnMain.aJumpProcedureExecute(Sender: TObject);
 var

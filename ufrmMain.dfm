@@ -2924,6 +2924,16 @@ object frmTinnMain: TfrmTinnMain
     object aAssignAllWindowsHere: TAction
       Caption = 'Assign all windows here'
     end
+    object aIncreaseFontSize: TAction
+      Caption = 'Increase Font Size'
+      ShortCut = 16457
+      OnExecute = aIncreaseFontSizeExecute
+    end
+    object aDecreaseFontSize: TAction
+      Caption = 'Decrease Font Size'
+      ShortCut = 16469
+      OnExecute = aDecreaseFontSizeExecute
+    end
   end
   object SynEditOptionsDialog2: TSynEditOptionsDialog
     UseExtendedStrings = False
